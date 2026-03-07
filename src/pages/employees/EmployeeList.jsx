@@ -304,8 +304,7 @@ const EmployeeList = () => {
                 // Generate activation link automatically
                 try {
                     const inviteResponse = await AuthService.inviteEmployee(newEmployee.id);
-                    const fullLink = `${window.location.origin}${inviteResponse.activationUrl}`;
-                    setActivationUrl(fullLink);
+                    setActivationUrl(inviteResponse.activationUrl);
                     setIsInvitationModalOpen(true);
                 } catch (inviteError) {
                     console.error('Failed to generate invitation', inviteError);
