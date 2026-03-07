@@ -855,7 +855,6 @@ const EmployeeList = () => {
                                             maxLength={14}
                                             onChange={handleNationalIdChange}
                                             placeholder="29901010101234"
-                                            required
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -904,7 +903,6 @@ const EmployeeList = () => {
                                             )}
                                             value={formData.maritalStatusStr || ''}
                                             onChange={e => setFormData({ ...formData, maritalStatusStr: e.target.value })}
-                                            required
                                         >
                                             <option value="">Select Status</option>
                                             <option value="Single">Single</option>
@@ -930,7 +928,6 @@ const EmployeeList = () => {
                                                 )}
                                                 value={formData.militaryStatusStr || ''}
                                                 onChange={e => setFormData({ ...formData, militaryStatusStr: e.target.value })}
-                                                required={formData.gender === 'Male'}
                                             >
                                                 <option value="">Select Status</option>
                                                 <option value="NotApplicable">Not Applicable</option>
