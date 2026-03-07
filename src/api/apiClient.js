@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || '/api',
+    baseURL: import.meta.env.VITE_API_URL || 'https://api.eventra.site/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -87,7 +87,7 @@ apiClient.interceptors.response.use(
                 const refreshToken = localStorage.getItem('refreshToken');
                 if (!refreshToken) throw new Error('No refresh token');
 
-                const response = await axios.post('/api/Auth/refresh', `"${refreshToken}"`, {
+                const response = await axios.post('https://api.eventra.site/api/Auth/refresh', `"${refreshToken}"`, {
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const { token } = response.data;

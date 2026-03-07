@@ -60,7 +60,7 @@ export const NotificationProvider = ({ children }) => {
 
             try {
                 const newConnection = new HubConnectionBuilder()
-                    .withUrl('/hubs/notification', {
+                    .withUrl('https://api.eventra.site/hubs/notification', {
                         accessTokenFactory: () => token
                     })
                     .configureLogging(LogLevel.Information)
