@@ -16,6 +16,7 @@ import {
     Download,
     X,
     Upload,
+    Edit2,
     Building2,
     AlertCircle,
     Lock,
@@ -47,6 +48,7 @@ const EmployeeProfile = () => {
     const [documents, setDocuments] = useState([]);
     const [salaryComponents, setSalaryComponents] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [isSubmittingComponent, setIsSubmittingComponent] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showComponentModal, setShowComponentModal] = useState(false);
     const [isEditingComponent, setIsEditingComponent] = useState(false);
@@ -268,7 +270,7 @@ const EmployeeProfile = () => {
             return;
         }
 
-        setIsUploading(true);
+        setIsSubmittingComponent(true);
         try {
             if (isEditingComponent) {
                 await PayrollService.updateComponent(editingComponentId, {
@@ -292,7 +294,7 @@ const EmployeeProfile = () => {
         } catch (error) {
             toast.error(isEditingComponent ? 'Failed to update component' : 'Failed to add component');
         } finally {
-            setIsUploading(false);
+            setIsSubmittingComponent(false);
         }
     };
 
@@ -1204,7 +1206,7 @@ const EmployeeProfile = () => {
                                                             className="h-7 w-7 text-slate-400 hover:text-accent"
                                                             onClick={() => handleEditComponent(comp)}
                                                         >
-                                                            <Upload className="w-3.5 h-3.5" />
+                                                            <Edit2 className="w-3.5 h-3.5" />
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
@@ -1307,7 +1309,7 @@ const EmployeeProfile = () => {
                             type="submit"
                             variant="accent"
                             className="flex-1 shadow-lg shadow-accent/20"
-                            isLoading={isUploading}
+                            isLoading={isSubmittingComponent}
                         >
                             Save Component
                         </Button>
