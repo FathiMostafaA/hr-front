@@ -34,6 +34,16 @@ const PayrollService = {
     getEmployeeComponents: async (employeeId) => {
         const response = await apiClient.get(`/Payroll/components/employee/${employeeId}`);
         return response.data;
+    },
+
+    updateComponent: async (id, componentData) => {
+        const response = await apiClient.put(`/Payroll/components/${id}`, componentData);
+        return response.data;
+    },
+
+    deleteComponent: async (id) => {
+        const response = await apiClient.delete(`/Payroll/components/${id}`);
+        return response.data;
     }
 };
 
