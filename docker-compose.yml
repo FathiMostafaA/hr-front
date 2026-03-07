@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: DockerFile
+    container_name: hr_frontend
+    ports:
+      - "80:80"
+    networks:
+      - hr_network
+
+networks:
+  hr_network:
+    external: true
+    name: hr_network
