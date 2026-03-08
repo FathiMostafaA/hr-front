@@ -308,7 +308,7 @@ const MainLayoutContent = () => {
                         <div className="p-6 flex items-center justify-between border-b border-slate-800">
                             <div className="flex items-center gap-2 font-display font-bold text-xl">
                                 <Users className="w-6 h-6 text-accent" />
-                                <span>HR System</span>
+                                <span>HR Master</span>
                             </div>
                             <button onClick={() => setMobileMenuOpen(false)}>
                                 <X className="w-6 h-6 text-slate-400" />
