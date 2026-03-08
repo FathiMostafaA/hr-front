@@ -44,6 +44,11 @@ const LeaveService = {
         const response = await apiClient.post('/Leaves/balance/initialize', data);
         return response.data;
     },
+
+    getLeaveTypes: async () => {
+        const response = await apiClient.get('/Leaves/types');
+        return response.data;
+    },
 };
 
 export default LeaveService;
