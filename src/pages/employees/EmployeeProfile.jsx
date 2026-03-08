@@ -213,7 +213,13 @@ const EmployeeProfile = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await EmployeeService.update(id, editForm);
+            // Clean up the form data: convert empty strings to null for backend compatibility
+            const cleanedData = Object.entries(editForm).reduce((acc, [key, value]) => {
+                acc[key] = value === '' ? null : value;
+                return acc;
+            }, {});
+
+            await EmployeeService.update(id, cleanedData);
             toast.success('Employee profile updated successfully');
             setIsEditModalOpen(false);
             fetchEmployee();
@@ -1504,7 +1510,6 @@ const EmployeeProfile = () => {
                                     className={`w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/20 outline-none ${!canEditField('email') ? "cursor-not-allowed text-slate-500" : ""}`}
                                     value={editForm.email}
                                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                    required
                                 />
                             </div>
                         )}
@@ -1553,7 +1558,6 @@ const EmployeeProfile = () => {
                                     className={`w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/20 outline-none ${!canEditField('departmentId') ? "cursor-not-allowed text-slate-500" : ""}`}
                                     value={editForm.departmentId}
                                     onChange={(e) => setEditForm({ ...editForm, departmentId: e.target.value })}
-                                    required
                                 >
                                     <option value="">Select Department</option>
                                     {departments.map(dept => (
@@ -1574,7 +1578,6 @@ const EmployeeProfile = () => {
                                     className={`w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/20 outline-none ${!canEditField('jobTitle') ? "cursor-not-allowed text-slate-500" : ""}`}
                                     value={editForm.jobTitle}
                                     onChange={(e) => setEditForm({ ...editForm, jobTitle: e.target.value })}
-                                    required
                                 />
                             </div>
                         )}
@@ -1593,7 +1596,6 @@ const EmployeeProfile = () => {
                                     className={`w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/20 outline-none ${!canEditField('hireDate') ? "cursor-not-allowed text-slate-500" : ""}`}
                                     value={editForm.hireDate}
                                     onChange={(e) => setEditForm({ ...editForm, hireDate: e.target.value })}
-                                    required
                                 />
                             </div>
                         )}
@@ -1611,7 +1613,6 @@ const EmployeeProfile = () => {
                                         className={`w-full bg-slate-50 border border-slate-200 rounded-lg pl-12 pr-3 py-2 text-sm focus:ring-2 focus:ring-accent/20 outline-none ${!canEditField('baseSalary') ? "cursor-not-allowed text-slate-500 font-mono" : ""}`}
                                         value={editForm.baseSalary}
                                         onChange={(e) => setEditForm({ ...editForm, baseSalary: e.target.value })}
-                                        required
                                     />
                                 </div>
                             </div>
@@ -1818,7 +1819,7 @@ const EmployeeProfile = () => {
                     </div>
                 </form>
             </Modal>
-        </div>
+        </div >
     );
 };
 
