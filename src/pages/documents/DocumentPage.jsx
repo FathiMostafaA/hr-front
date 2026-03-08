@@ -22,6 +22,8 @@ const DocumentPage = () => {
     const { user } = useAuth();
     const [docs, setDocs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPosting, setIsPosting] = useState(false);
+    const fileInputRef = React.useRef(null);
 
     React.useEffect(() => {
         if (user?.employeeId) {
@@ -37,6 +39,29 @@ const DocumentPage = () => {
             toast.error('Failed to load documents');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsPosting(true);
+        try {
+            await documentService.uploadDocument(
+                user.employeeId,
+                file,
+                'Personal', // Default type for now
+                null,
+                false
+            );
+            toast.success('Document uploaded successfully');
+            fetchDocuments();
+        } catch (error) {
+            toast.error('Failed to upload document');
+        } finally {
+            setIsPosting(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -68,6 +93,13 @@ const DocumentPage = () => {
 
     return (
         <div className="space-y-6">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+            />
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Resource Center</h1>
@@ -77,9 +109,17 @@ const DocumentPage = () => {
                     <Button variant="outline">
                         Request Document
                     </Button>
-                    <Button variant="accent">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload File
+                    <Button
+                        variant="accent"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isPosting}
+                    >
+                        {isPosting ? 'Uploading...' : (
+                            <>
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload File
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -97,7 +137,13 @@ const DocumentPage = () => {
                             <p className="text-sm text-slate-400 leading-relaxed mb-6">
                                 Your **Passport Copy** is set to expire in <span className="text-white font-bold underline decoration-amber-400 underline-offset-4">12 days</span>. Please upload a renewed version.
                             </p>
-                            <Button variant="accent" className="w-full">Upload Renewed Copy</Button>
+                            <Button
+                                variant="accent"
+                                className="w-full"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Upload Renewed Copy
+                            </Button>
                         </CardContent>
                     </Card>
 
@@ -109,7 +155,9 @@ const DocumentPage = () => {
                             {['Company Policies', 'Contracts', 'Personal', 'Certificates', 'Training'].map((cat, i) => (
                                 <button key={i} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 text-left text-sm font-medium text-slate-600 transition-all">
                                     {cat}
-                                    <span className="text-[10px] py-0.5 px-2 bg-slate-100 rounded-full font-bold">12</span>
+                                    <span className="text-[10px] py-0.5 px-2 bg-slate-100 rounded-full font-bold">
+                                        {docs.filter(d => d.documentType === cat).length || 0}
+                                    </span>
                                 </button>
                             ))}
                         </CardContent>
@@ -144,16 +192,24 @@ const DocumentPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {docs.map((doc) => (
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-12 text-center text-slate-400">Loading documents...</td>
+                                        </tr>
+                                    ) : docs.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-12 text-center text-slate-400">No documents found.</td>
+                                        </tr>
+                                    ) : docs.map((doc) => (
                                         <tr key={doc.id} className="group hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 rounded-lg bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-accent transition-all">
-                                                        {doc.name.endsWith('.jpg') ? <FileImage className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                                                        {(doc.documentName || '').toLowerCase().endsWith('.jpg') ? <FileImage className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-900 leading-tight">{doc.fileName}</p>
-                                                        <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase">{Math.round(doc.fileSize / 1024)} KB</p>
+                                                        <p className="text-sm font-bold text-slate-900 leading-tight">{doc.documentName}</p>
+                                                        <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase">{Math.round(doc.fileSize / 1024) || 0} KB</p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -161,17 +217,22 @@ const DocumentPage = () => {
                                                 <span className="text-xs font-semibold text-slate-600 px-2 py-0.5 bg-slate-100 rounded-md ring-1 ring-slate-200">{doc.documentType}</span>
                                             </td>
                                             <td className="px-6 py-5 text-sm text-slate-500 font-medium font-mono">
-                                                {new Date(doc.uploadDate).toLocaleDateString()}
+                                                {new Date(doc.uploadedAt).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-5 text-center">
                                                 <Badge variant={doc.status === 'Verified' ? 'success' : 'warning'}>
                                                     {doc.status || 'Active'}
                                                 </Badge>
                                             </td>
-                                            <td className="px-6 py-5 text-right">
-                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDownload(doc.id, doc.fileName)}>
+                                            <td className="px-6 py-5 text-right flex items-center justify-end gap-2">
+                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDownload(doc.id, doc.documentName + '.pdf')}>
                                                     <Download className="w-4 h-4" />
                                                 </Button>
+                                                {user?.role === 'Admin' && (
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600" onClick={() => handleDelete(doc.id)}>
+                                                        <MoreHorizontal className="w-4 h-4" />
+                                                    </Button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

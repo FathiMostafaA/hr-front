@@ -284,8 +284,8 @@ const PayrollPage = () => {
                                         <span className="font-bold text-rose-500">-{selectedPayroll.currency} {selectedPayroll.socialSecurityDeduction.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-slate-600">Other Deductions</span>
-                                        <span className="font-bold text-rose-500">-{selectedPayroll.currency} {selectedPayroll.otherDeductions.toLocaleString()}</span>
+                                        <span className="text-slate-600">Other Deductions (Absence/Lates)</span>
+                                        <span className="font-bold text-rose-500">-{selectedPayroll.currency} {selectedPayroll.otherDeductions?.toLocaleString()}</span>
                                     </div>
                                     <div className="pt-2 border-t border-slate-50 flex justify-between text-sm font-black">
                                         <span className="text-slate-900">Total Deductions</span>
