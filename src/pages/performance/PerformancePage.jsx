@@ -37,12 +37,14 @@ const PerformancePage = () => {
             if (isHRRestricted) {
                 data = await PerformanceService.getAllReviews();
             } else if (user?.roles?.includes('Manager')) {
-                const pending = await PerformanceService.getPendingReviews(user.id);
-                const history = await PerformanceService.getEmployeeHistory(user.id);
+                const targetId = user.employeeId || user.id;
+                const pending = await PerformanceService.getPendingReviews(targetId);
+                const history = await PerformanceService.getEmployeeHistory(targetId);
                 // Manager sees both their pending reviews to do, and their own history
                 data = [...pending, ...history];
             } else {
-                data = await PerformanceService.getEmployeeHistory(user.id);
+                const targetId = user.employeeId || user.id;
+                data = await PerformanceService.getEmployeeHistory(targetId);
             }
             setReviews(data);
         } catch (error) {
