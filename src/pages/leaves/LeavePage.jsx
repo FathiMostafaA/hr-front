@@ -93,17 +93,44 @@ const LeavePage = () => {
         setIsLoading(true);
         try {
             // Fetch dynamic leave types
-            const types = await LeaveService.getLeaveTypes();
-            setLeaveTypes(types || []);
+            const rawTypes = await LeaveService.getLeaveTypes();
+            const types = (rawTypes || []).map(t => ({
+                id: t.id || t.Id,
+                name: t.name || t.Name,
+                nameAr: t.nameAr || t.NameAr,
+                code: t.code || t.Code
+            }));
+            setLeaveTypes(types);
 
             // Fetch leave history
-            const history = await LeaveService.getHistory(employeeId);
-            setRequests(history || []);
+            const rawHistory = await LeaveService.getHistory(employeeId);
+            const normalizedHistory = (rawHistory || []).map(r => ({
+                id: r.id || r.Id,
+                employeeName: r.employeeName || r.EmployeeName,
+                leaveTypeName: r.leaveTypeName || r.LeaveTypeName,
+                leaveTypeCode: r.leaveTypeCode || r.LeaveTypeCode,
+                startDate: r.startDate || r.StartDate,
+                endDate: r.endDate || r.EndDate,
+                workingDays: r.workingDays || r.WorkingDays,
+                status: r.status || r.Status,
+                approverName: r.approverName || r.ApproverName,
+                approvalComments: r.approvalComments || r.ApprovalComments,
+                reason: r.reason || r.Reason
+            }));
+            setRequests(normalizedHistory);
 
-            // Fetch balances for all fetched leave types
+            // Fetch balances
             const balancePromises = types.map(type =>
                 LeaveService.getBalance(employeeId, type.id, currentYear)
-                    .then(bal => ({ ...bal, typeName: type.name, typeNameAr: type.nameAr, code: type.code }))
+                    .then(bal => ({
+                        ...bal,
+                        typeName: type.name,
+                        typeNameAr: type.nameAr,
+                        code: type.code,
+                        remainingDays: bal.remainingDays ?? bal.RemainingDays ?? 0,
+                        totalEntitledDays: bal.totalEntitledDays ?? bal.TotalEntitledDays ?? 0,
+                        usedDays: bal.usedDays ?? bal.UsedDays ?? 0
+                    }))
                     .catch(() => ({
                         typeName: type.name,
                         typeNameAr: type.nameAr,
@@ -119,8 +146,19 @@ const LeavePage = () => {
             // If admin, also fetch pending requests
             if (isAdmin) {
                 try {
-                    const pending = await LeaveService.getPending();
-                    setPendingRequests(pending || []);
+                    const rawPending = await LeaveService.getPending();
+                    const normalizedPending = (rawPending || []).map(r => ({
+                        id: r.id || r.Id,
+                        employeeName: r.employeeName || r.EmployeeName,
+                        leaveTypeName: r.leaveTypeName || r.LeaveTypeName,
+                        leaveTypeCode: r.leaveTypeCode || r.LeaveTypeCode,
+                        startDate: r.startDate || r.StartDate,
+                        endDate: r.endDate || r.EndDate,
+                        workingDays: r.workingDays || r.WorkingDays,
+                        status: r.status || r.Status,
+                        reason: r.reason || r.Reason
+                    }));
+                    setPendingRequests(normalizedPending);
                 } catch {
                     setPendingRequests([]);
                 }
@@ -135,7 +173,10 @@ const LeavePage = () => {
 
     useEffect(() => {
         if (leaveTypes.length > 0 && !form.leaveTypeId) {
-            setForm(f => ({ ...f, leaveTypeId: leaveTypes[0].id }));
+            const firstId = leaveTypes[0].id;
+            if (firstId) {
+                setForm(f => ({ ...f, leaveTypeId: firstId }));
+            }
         }
     }, [leaveTypes, form.leaveTypeId]);
 
