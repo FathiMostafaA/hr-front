@@ -165,13 +165,15 @@ const LeavePage = () => {
                         reason: r.reason || r.Reason
                     }));
                     setPendingRequests(normalizedPending);
-                } catch {
+                } catch (error) {
+                    console.error('Failed to fetch pending requests', error);
                     setPendingRequests([]);
                 }
             }
         } catch (error) {
             console.error('Failed to fetch leave data', error);
-            toast.error('Failed to load leave configuration');
+            const msg = error.response?.data;
+            toast.error(typeof msg === 'string' ? msg : 'Failed to load leave configuration');
         } finally {
             setIsLoading(false);
         }
