@@ -107,7 +107,7 @@ const LoginPage = () => {
                 </Card>
 
                 <p className="text-center text-xs text-slate-400 mt-8">
-                    © 2026 HR System Pro. All rights reserved.
+                    © 2026 HR Master Pro. All rights reserved.
                 </p>
             </div>
         </div>
