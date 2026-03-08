@@ -21,6 +21,7 @@ const RecruitmentPage = () => {
     const [selectedJob, setSelectedJob] = useState(null);
     const { user } = useAuth();
     const isAdminOrHR = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
+    const isHRManager = user?.roles?.some(r => ['Admin', 'HRManager'].includes(r));
     const [candidates, setCandidates] = useState([]);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -206,7 +207,7 @@ const RecruitmentPage = () => {
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Recruitment</h1>
                     <p className="text-slate-500 mt-1">Manage job postings and track candidate pipeline.</p>
                 </div>
-                {isAdminOrHR && (
+                {isHRManager && (
                     <Button variant="accent" onClick={() => setIsJobModalOpen(true)} className="shadow-lg shadow-accent/20">
                         <Plus className="w-5 h-5 mr-2" />
                         Create Job Post
@@ -273,7 +274,7 @@ const RecruitmentPage = () => {
                                             >
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            {isAdminOrHR && (
+                                            {isHRManager && (
                                                 job.status === 'Open' ? (
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleUpdateJobStatus(job, 'Closed'); }}
@@ -347,7 +348,7 @@ const RecruitmentPage = () => {
                                             {c.currentStage === 'Hired' ? (
                                                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                                             ) : (
-                                                isAdminOrHR && (
+                                                isHRManager && (
                                                     <Button size="sm" variant="accent" className="h-7 px-3 text-[10px] font-black uppercase" onClick={() => openHireModal(c)}>
                                                         Hire
                                                     </Button>

@@ -17,6 +17,7 @@ import PayrollService from '../../api/services/payrollService';
 import ReportService from '../../api/services/reportService';
 import exportService from '../../api/services/exportService';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 const PayrollPage = () => {
     const [payrollHistory, setPayrollHistory] = useState([]);
@@ -24,6 +25,8 @@ const PayrollPage = () => {
     const [selectedPayroll, setSelectedPayroll] = useState(null);
     const [showPayslip, setShowPayslip] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const { user } = useAuth();
+    const isHRManager = user?.roles?.some(r => r === 'Admin' || r === 'HRManager');
 
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
@@ -101,14 +104,16 @@ const PayrollPage = () => {
                         <Download className="w-4 h-4 mr-2" />
                         Export Payslips
                     </Button>
-                    <Button variant="accent" onClick={handleRunPayroll} disabled={isLoading}>
-                        {isLoading ? 'Processing...' : (
-                            <>
-                                <Calculator className="w-4 h-4 mr-2" />
-                                Run Payroll
-                            </>
-                        )}
-                    </Button>
+                    {isHRManager && (
+                        <Button variant="accent" onClick={handleRunPayroll} disabled={isLoading}>
+                            {isLoading ? 'Processing...' : (
+                                <>
+                                    <Calculator className="w-4 h-4 mr-2" />
+                                    Run Payroll
+                                </>
+                            )}
+                        </Button>
+                    )}
                 </div>
             </div>
 

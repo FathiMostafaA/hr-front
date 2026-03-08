@@ -32,6 +32,7 @@ const DepartmentList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const { user } = useAuth();
     const isAdminOrHR = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
+    const isHRManager = user?.roles?.some(r => ['Admin', 'HRManager'].includes(r));
 
     // Auth/CRUD Modals
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -222,7 +223,7 @@ const DepartmentList = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    {isAdminOrHR && (
+                    {isHRManager && (
                         <Button variant="accent" onClick={handleAdd}>
                             <Plus className="w-4 h-4 mr-2" />
                             New Department
@@ -260,7 +261,7 @@ const DepartmentList = () => {
                                 <div className="p-2 rounded-lg bg-white border border-slate-200">
                                     <Building2 className="w-5 h-5 text-accent" />
                                 </div>
-                                {isAdminOrHR && (
+                                {isHRManager && (
                                     <div className="flex gap-1">
                                         <button
                                             onClick={() => handleEdit(dept)}
@@ -292,7 +293,7 @@ const DepartmentList = () => {
                                             <Users2 size={14} className="text-slate-400" />
                                             {dept.managerName || 'No Manager Assigned'}
                                         </div>
-                                        {isAdminOrHR && (
+                                        {isHRManager && (
                                             <button
                                                 onClick={() => handleAssignManager(dept)}
                                                 className="text-accent hover:underline font-semibold"
