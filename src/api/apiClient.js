@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site';
-console.log('Using API Base URL:', API_URL);
+// Hardcoded for now to ensure it's picked up by the build
+const API_URL = 'https://api.eventra.site';
+console.log('Using API Base URL (Hardcoded):', API_URL);
 
 const apiClient = axios.create({
     baseURL: API_URL,
