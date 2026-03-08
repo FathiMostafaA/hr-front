@@ -193,18 +193,20 @@ const AttendancePage = () => {
                             </div>
                         </div>
                         <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-                                <TrendingUp className="w-5 h-5 text-amber-600" />
+                            <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
+                                <AlertCircle className="w-5 h-5 text-red-600" />
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-slate-500 uppercase">Overtime</p>
-                                <p className="text-xl font-bold text-slate-900">{formatHours(totalOvertime)}</p>
+                                <p className="text-xs font-medium text-slate-500 uppercase">Monthly Delays</p>
+                                <p className="text-xl font-bold text-slate-900">
+                                    {history.reduce((sum, r) => sum + (r.delayMinutes || 0), 0)}m
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card className="lg:col-span-1 border-accent/20 bg-gradient-to-br from-accent/5 to-white">
+                        <Card className="lg:col-span-1 border-accent/20 bg-gradient-to-br from-accent/5 to-white shadow-sm overflow-hidden relative">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Clock className="w-5 h-5 text-accent" />
@@ -222,18 +224,36 @@ const AttendancePage = () => {
                                     {currentTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                 </div>
                                 {isClockedIn && (
-                                    <div className="mb-6 text-center">
-                                        <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Session Duration</p>
-                                        <p className="text-2xl font-bold text-emerald-600 font-mono">{getElapsedTime()}</p>
+                                    <div className="mb-6 text-center space-y-4">
+                                        <div>
+                                            <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Session Duration</p>
+                                            <p className="text-2xl font-bold text-emerald-600 font-mono">{getElapsedTime()}</p>
+                                        </div>
+                                        {todayRecord?.delayMinutes > 0 && (
+                                            <div className="p-2 px-4 rounded-full bg-red-50 border border-red-100 flex items-center gap-2">
+                                                <AlertCircle className="w-4 h-4 text-red-500" />
+                                                <span className="text-xs font-bold text-red-700">Late by {todayRecord.delayMinutes}m</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 {todayRecord?.clockOutTime && (
-                                    <div className="mb-6 text-center">
-                                        <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Today's Hours</p>
-                                        <p className="text-2xl font-bold text-blue-600">{formatHours(todayRecord.workHours)}</p>
-                                        {todayRecord.overtimeHours > 0 && (
-                                            <p className="text-xs text-amber-600 font-medium mt-1">+{formatHours(todayRecord.overtimeHours)} overtime</p>
-                                        )}
+                                    <div className="mb-6 text-center space-y-2">
+                                        <div>
+                                            <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Today's Hours</p>
+                                            <p className="text-2xl font-bold text-blue-600">{formatHours(todayRecord.workHours)}</p>
+                                        </div>
+                                        <div className="flex flex-wrap justify-center gap-2">
+                                            {todayRecord.overtimeHours > 0 && (
+                                                <span className="px-2 py-1 rounded-md bg-amber-50 text-amber-600 text-[10px] font-bold">+{formatHours(todayRecord.overtimeHours)} OT</span>
+                                            )}
+                                            {todayRecord.delayMinutes > 0 && (
+                                                <span className="px-2 py-1 rounded-md bg-red-50 text-red-600 text-[10px] font-bold">{todayRecord.delayMinutes}m Late</span>
+                                            )}
+                                            {todayRecord.earlyLeavingMinutes > 0 && (
+                                                <span className="px-2 py-1 rounded-md bg-orange-50 text-orange-600 text-[10px] font-bold">{todayRecord.earlyLeavingMinutes}m Early Leave</span>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                                 <div className="w-full max-w-[200px] relative">
@@ -262,13 +282,16 @@ const AttendancePage = () => {
                                     )}
                                 </div>
                             </CardContent>
+                            <div className="absolute top-0 right-0 p-4 opacity-5">
+                                <Clock className="w-24 h-24" />
+                            </div>
                         </Card>
 
                         <Card className="lg:col-span-2">
-                            <CardHeader className="flex flex-row items-center justify-between">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <div>
                                     <CardTitle>Attendance History</CardTitle>
-                                    <CardDescription>Your recent clock-in/out logs (last 30 days)</CardDescription>
+                                    <CardDescription>Your recent clock-in/out logs with delay tracking</CardDescription>
                                 </div>
                                 <Button variant="outline" size="sm" onClick={fetchData}>
                                     <History className="w-4 h-4 mr-2" /> Refresh
@@ -287,8 +310,8 @@ const AttendancePage = () => {
                                                     <th className="pb-4">Date</th>
                                                     <th className="pb-4">Clock In</th>
                                                     <th className="pb-4">Clock Out</th>
-                                                    <th className="pb-4">Work Hours</th>
-                                                    <th className="pb-4">Overtime</th>
+                                                    <th className="pb-4">Hours</th>
+                                                    <th className="pb-4">Delays</th>
                                                     <th className="pb-4 text-center">Status</th>
                                                 </tr>
                                             </thead>
@@ -298,17 +321,36 @@ const AttendancePage = () => {
                                                         <td className="py-4 text-sm font-medium text-slate-900">
                                                             {new Date(row.attendanceDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                                                         </td>
-                                                        <td className="py-4 text-sm text-slate-600 font-mono">{row.clockInTime ? new Date(row.clockInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</td>
-                                                        <td className="py-4 text-sm text-slate-600 font-mono">{row.clockOutTime ? new Date(row.clockOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</td>
-                                                        <td className="py-4 text-sm text-slate-600 font-mono">{formatHours(row.workHours)}</td>
+                                                        <td className="py-4 text-sm text-slate-600 font-mono">
+                                                            {row.clockInTime ? new Date(row.clockInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                                            {row.delayMinutes > 0 && (
+                                                                <span className="block text-[10px] text-red-500 font-bold">+{row.delayMinutes}m late</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-4 text-sm text-slate-600 font-mono">
+                                                            {row.clockOutTime ? new Date(row.clockOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                                            {row.earlyLeavingMinutes > 0 && (
+                                                                <span className="block text-[10px] text-orange-500 font-bold">{row.earlyLeavingMinutes}m early</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-4 text-sm text-slate-600 font-mono">
+                                                            {formatHours(row.workHours)}
+                                                            {row.overtimeHours > 0 && (
+                                                                <span className="block text-[10px] text-amber-500 font-bold">+{formatHours(row.overtimeHours)} OT</span>
+                                                            )}
+                                                        </td>
                                                         <td className="py-4 text-sm font-mono">
-                                                            {row.overtimeHours > 0 ? <span className="text-amber-600 font-medium">+{formatHours(row.overtimeHours)}</span> : <span className="text-slate-300">—</span>}
+                                                            {(row.delayMinutes || 0) + (row.earlyLeavingMinutes || 0) > 0 ? (
+                                                                <span className="text-red-600 font-medium">{(row.delayMinutes || 0) + (row.earlyLeavingMinutes || 0)}m</span>
+                                                            ) : (
+                                                                <span className="text-slate-300">—</span>
+                                                            )}
                                                         </td>
                                                         <td className="py-4 text-center">
                                                             {row.clockOutTime ? (
                                                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium"><CheckCircle2 className="w-3.5 h-3.5" /> Complete</span>
                                                             ) : (
-                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"><div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" /> In Progress</span>
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"><div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" /> Active</span>
                                                             )}
                                                         </td>
                                                     </tr>
