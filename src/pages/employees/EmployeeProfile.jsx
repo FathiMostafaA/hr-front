@@ -240,12 +240,12 @@ const EmployeeProfile = () => {
         }
         setIsUploading(true);
         try {
-            await DocumentService.upload(
+            await DocumentService.uploadDocument(
                 id,
-                uploadForm.name || selectedFile.name,
-                uploadForm.type,
                 selectedFile,
-                uploadForm.expiryDate
+                uploadForm.type,
+                uploadForm.expiryDate,
+                false // requiresSignature defaults to false
             );
             toast.success('Document uploaded successfully');
             setShowUploadModal(false);
@@ -262,7 +262,7 @@ const EmployeeProfile = () => {
     const handleDeleteDocument = async (docId) => {
         if (!window.confirm('Are you sure you want to delete this document?')) return;
         try {
-            await DocumentService.delete(docId);
+            await DocumentService.deleteDocument(docId);
             toast.success('Document deleted');
             fetchDocuments();
         } catch (error) {
