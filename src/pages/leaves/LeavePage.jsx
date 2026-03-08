@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
 import LeaveService from '../../api/services/leaveService';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -46,17 +45,20 @@ const getLeaveTypeUI = (code) => UI_CONFIG[code?.toUpperCase()] || UI_CONFIG.DEF
 
 const StatusBadge = ({ status }) => {
     const config = {
-        Pending: { icon: Clock, variant: 'warning', label: 'Pending' },
-        Approved: { icon: CheckCircle2, variant: 'success', label: 'Approved' },
-        Rejected: { icon: XCircle, variant: 'error', label: 'Rejected' },
-        Cancelled: { icon: XCircle, variant: 'default', label: 'Cancelled' },
+        Pending: { icon: Clock, variant: 'warning', label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+        Approved: { icon: CheckCircle2, variant: 'success', label: 'Approved', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+        Rejected: { icon: XCircle, variant: 'error', label: 'Rejected', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+        Cancelled: { icon: XCircle, variant: 'default', label: 'Cancelled', bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200' },
     };
     const c = config[status] || config.Pending;
     return (
-        <Badge variant={c.variant}>
-            <c.icon className="w-3 h-3 mr-1" />
+        <span className={cn(
+            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all duration-300",
+            c.bg, c.text, c.border
+        )}>
+            <c.icon className="w-3 h-3" />
             {c.label}
-        </Badge>
+        </span>
     );
 };
 
@@ -233,48 +235,73 @@ const LeavePage = () => {
     }, [requests]);
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-8">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Leave Management</h1>
-                    <p className="text-slate-500 mt-1">Request and track your leave applications with dynamic policies.</p>
+                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 font-display">
+                        Leave Management
+                    </h1>
+                    <p className="text-slate-500 mt-2 text-lg max-w-2xl">
+                        Request and track your leave applications with dynamic policies and real-time balances.
+                    </p>
                 </div>
-                <Button variant="accent" onClick={() => setShowModal(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
+                <Button
+                    variant="accent"
+                    size="lg"
+                    className="shadow-lg shadow-accent/20 hover:shadow-xl hover:translate-y-[-2px] transition-all duration-300 rounded-xl px-8"
+                    onClick={() => setShowModal(true)}
+                >
+                    <Plus className="w-5 h-5 mr-2" />
                     Apply for Leave
                 </Button>
             </div>
 
             {/* Balance Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {isLoading ? (
                     Array(4).fill(0).map((_, i) => (
-                        <Card key={i} className="animate-pulse bg-slate-50 border-transparent h-28" />
+                        <div key={i} className="h-32 rounded-2xl bg-slate-100 animate-pulse border border-slate-200" />
                     ))
                 ) : balances.map((bal, i) => {
                     const ui = getLeaveTypeUI(bal.code);
                     const Icon = ui.icon;
                     return (
-                        <Card key={i} className="overflow-hidden border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className={cn("p-1.5 rounded-lg", ui.bgLight, ui.textColor)}>
-                                        <Icon className="w-4 h-4" />
+                        <Card
+                            key={i}
+                            className="group relative overflow-hidden border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white ring-1 ring-slate-200/50"
+                        >
+                            <div className={cn("absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full opacity-[0.03] transition-transform duration-700 group-hover:scale-150", ui.color)} />
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={cn("p-2.5 rounded-xl shadow-sm transition-transform duration-300 group-hover:scale-110", ui.bgLight, ui.textColor)}>
+                                        <Icon className="w-5 h-5" />
                                     </div>
-                                    <span className="text-xs font-bold text-slate-600 truncate">{user?.language === 'ar' ? bal.typeNameAr : bal.typeName}</span>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
+                                        {bal.code || 'LEAVE'}
+                                    </span>
                                 </div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-2xl font-black text-slate-900">{bal.remainingDays}</span>
-                                    <span className="text-[10px] font-semibold text-slate-400">/ {bal.totalEntitledDays} days</span>
+
+                                <h3 className="text-sm font-bold text-slate-600 mb-1 truncate">
+                                    {user?.language === 'ar' ? bal.typeNameAr : bal.typeName}
+                                </h3>
+
+                                <div className="flex items-baseline gap-1.5 mb-4">
+                                    <span className="text-3xl font-black text-slate-900 tracking-tight">{bal.remainingDays}</span>
+                                    <span className="text-xs font-semibold text-slate-400">/ {bal.totalEntitledDays} days left</span>
                                 </div>
-                                {bal.usedDays > 0 && (
-                                    <div className="mt-2 w-full bg-slate-100 rounded-full h-1.5">
+
+                                <div className="space-y-1.5">
+                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter">
+                                        <span className="text-slate-400">Utilization</span>
+                                        <span className={ui.textColor}>{Math.round((bal.usedDays / bal.totalEntitledDays) * 100 || 0)}%</span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                                         <div
-                                            className={cn("h-1.5 rounded-full", ui.color)}
+                                            className={cn("h-full rounded-full transition-all duration-1000 ease-out", ui.color)}
                                             style={{ width: `${Math.min(100, (bal.usedDays / bal.totalEntitledDays) * 100)}%` }}
                                         />
                                     </div>
-                                )}
+                                </div>
                             </CardContent>
                         </Card>
                     );
@@ -283,96 +310,131 @@ const LeavePage = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Calendar View */}
-                <Card className="lg:col-span-1">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg flex items-center gap-2">
+                <Card className="lg:col-span-1 border-none shadow-sm ring-1 ring-slate-200/50 overflow-hidden bg-white">
+                    <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
+                        <CardTitle className="text-lg flex items-center gap-2 font-display">
                             <CalendarIcon className="w-5 h-5 text-accent" />
                             Leave Calendar
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0 sm:p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 rounded-lg">
-                                <ChevronLeft className="w-4 h-4" />
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <button
+                                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                                className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-500 hover:text-slate-900"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
                             </button>
-                            <span className="font-bold text-slate-900">{format(currentMonth, 'MMMM yyyy')}</span>
-                            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 rounded-lg">
-                                <ChevronRight className="w-4 h-4" />
+                            <span className="font-bold text-slate-900 text-lg">{format(currentMonth, 'MMMM yyyy')}</span>
+                            <button
+                                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                                className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-500 hover:text-slate-900"
+                            >
+                                <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
-                        <DayPicker
-                            month={currentMonth}
-                            onMonthChange={setCurrentMonth}
-                            className="bg-white rounded-xl border-none shadow-none mx-auto"
-                            modifiers={{
-                                leave: (date) => !!calendarEvents[format(date, 'yyyy-MM-dd')],
-                                weekend: (date) => isWeekend(date)
-                            }}
-                            modifiersClassNames={{
-                                leave: "bg-accent/10 font-bold text-accent rounded-full",
-                                weekend: "text-slate-300"
-                            }}
-                            components={{
-                                DayContent: ({ date }) => {
-                                    const event = calendarEvents[format(date, 'yyyy-MM-dd')];
-                                    return (
-                                        <div className="relative w-full h-full flex items-center justify-center p-2">
-                                            <span>{date.getDate()}</span>
-                                            {event && (
-                                                <div className={cn(
-                                                    "absolute bottom-1 w-1 h-1 rounded-full",
-                                                    event.status === 'Approved' ? "bg-emerald-500" : "bg-amber-500"
-                                                )} />
-                                            )}
-                                        </div>
-                                    );
-                                }
-                            }}
-                        />
+                        <div className="calendar-modern">
+                            <DayPicker
+                                month={currentMonth}
+                                onMonthChange={setCurrentMonth}
+                                className="border-none shadow-none mx-auto"
+                                modifiers={{
+                                    leave: (date) => !!calendarEvents[format(date, 'yyyy-MM-dd')],
+                                    weekend: (date) => isWeekend(date)
+                                }}
+                                modifiersClassNames={{
+                                    leave: "bg-accent/10 font-bold text-accent rounded-xl",
+                                    weekend: "text-slate-300 opacity-50"
+                                }}
+                                components={{
+                                    DayContent: ({ date }) => {
+                                        const event = calendarEvents[format(date, 'yyyy-MM-dd')];
+                                        return (
+                                            <div className="relative w-full h-full flex items-center justify-center p-2 group cursor-default">
+                                                <span className="text-sm font-medium z-10 transition-transform group-hover:scale-110">{date.getDate()}</span>
+                                                {event && (
+                                                    <div className={cn(
+                                                        "absolute inset-1 rounded-xl transition-all duration-300",
+                                                        event.status === 'Approved' ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-amber-500/10 border border-amber-500/20"
+                                                    )} />
+                                                )}
+                                            </div>
+                                        );
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-wider">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                                <span className="text-slate-500">Approved</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-amber-500" />
+                                <span className="text-slate-500">Pending</span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
                 {/* Admin: Pending Requests */}
                 {isAdmin && pendingRequests.length > 0 && (
-                    <Card className="border-amber-200 bg-amber-50/30">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-amber-800">
-                                <Clock className="w-5 h-5" />
-                                Pending Approvals ({pendingRequests.length})
+                    <Card className="border-none shadow-lg shadow-amber-500/5 ring-1 ring-amber-200/50 bg-amber-50/20 overflow-hidden">
+                        <CardHeader className="pb-4 bg-amber-50/50 border-b border-amber-100">
+                            <CardTitle className="flex items-center gap-2 text-amber-900 font-display">
+                                <div className="p-2 rounded-lg bg-amber-500 text-white shadow-md">
+                                    <Clock className="w-5 h-5 animate-pulse" />
+                                </div>
+                                Pending Approvals
+                                <Badge variant="secondary" className="bg-amber-200 text-amber-800 border-none ml-2">
+                                    {pendingRequests.length}
+                                </Badge>
                             </CardTitle>
-                            <CardDescription>Leave requests waiting for your approval</CardDescription>
+                            <CardDescription className="text-amber-700/70">Requires your immediate action</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="space-y-4">
                                 {pendingRequests.map((req) => {
                                     const ui = getLeaveTypeUI(req.leaveTypeCode);
                                     const Icon = ui.icon;
                                     return (
-                                        <div key={req.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:shadow-sm transition-shadow">
-                                            <div className="flex items-center gap-4">
-                                                <div className={cn("p-2 rounded-lg", ui.bgLight, ui.textColor)}>
-                                                    <Icon className="w-4 h-4" />
+                                        <div
+                                            key={req.id}
+                                            className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 hover:border-amber-200 hover:shadow-md transition-all duration-300 gap-4"
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div className={cn("p-3 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300", ui.bgLight, ui.textColor)}>
+                                                    <Icon className="w-5 h-5" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-slate-900">{req.employeeName}</p>
-                                                    <p className="text-xs text-slate-500">
-                                                        {req.leaveTypeName} · {req.workingDays} working days · {new Date(req.startDate).toLocaleDateString()} → {new Date(req.endDate).toLocaleDateString()}
-                                                    </p>
+                                                    <p className="text-base font-bold text-slate-900 mb-0.5">{req.employeeName}</p>
+                                                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+                                                        <span className={cn("px-2 py-0.5 rounded-full", ui.bgLight, ui.textColor)}>
+                                                            {req.leaveTypeName}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <CalendarIcon className="w-3 h-3" />
+                                                            {new Date(req.startDate).toLocaleDateString()}
+                                                        </span>
+                                                        <span className="px-1.5 py-0.5 bg-slate-100 rounded-md font-mono text-slate-700">
+                                                            {req.workingDays}d
+                                                        </span>
+                                                    </div>
                                                     {req.reason && (
-                                                        <p className="text-xs text-slate-400 mt-0.5 italic">"{req.reason}"</p>
+                                                        <p className="text-xs text-slate-400 mt-2 italic bg-slate-50 p-2 rounded-lg border-l-2 border-slate-200">
+                                                            "{req.reason}"
+                                                        </p>
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="accent"
-                                                    size="sm"
-                                                    onClick={() => { setShowApprovalModal(req); setApprovalComment(''); }}
-                                                >
-                                                    <UserCheck className="w-3.5 h-3.5 mr-1" />
-                                                    Review
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                variant="accent"
+                                                className="w-full sm:w-auto shadow-sm hover:shadow-md transition-all rounded-xl py-6 sm:py-2"
+                                                onClick={() => { setShowApprovalModal(req); setApprovalComment(''); }}
+                                            >
+                                                <UserCheck className="w-4 h-4 mr-2" />
+                                                Review
+                                            </Button>
                                         </div>
                                     );
                                 })}
@@ -382,136 +444,204 @@ const LeavePage = () => {
                 )}
 
                 {/* My Requests Table */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                <Card className="border-none shadow-sm ring-1 ring-slate-200/50 overflow-hidden bg-white">
+                    <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50 border-b border-slate-100">
                         <div>
-                            <CardTitle>My Leave Requests</CardTitle>
+                            <CardTitle className="font-display">My Leave Requests</CardTitle>
                             <CardDescription>Your leave request history and current applications</CardDescription>
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0">
                         {isLoading ? (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                            <div className="flex items-center justify-center py-20">
+                                <Loader2 className="w-8 h-8 text-accent animate-spin" />
                             </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                                            <th className="pb-4">Type</th>
-                                            <th className="pb-4">Duration</th>
-                                            <th className="pb-4">Days</th>
-                                            <th className="pb-4">Reason</th>
-                                            <th className="pb-4 text-center">Status</th>
-                                            <th className="pb-4">Approver</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {requests.length > 0 ? requests.map((req) => {
-                                            const ui = getLeaveTypeUI(req.leaveTypeCode);
-                                            const Icon = ui.icon;
-                                            return (
-                                                <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="py-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className={cn("p-1.5 rounded-lg", ui.bgLight, ui.textColor)}>
-                                                                <Icon className="w-3.5 h-3.5" />
-                                                            </div>
-                                                            <span className="text-sm font-medium text-slate-900">
-                                                                {user?.language === 'ar' ? req.leaveTypeNameAr : req.leaveTypeName}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 text-sm text-slate-600">
-                                                        {new Date(req.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                                        {' → '}
-                                                        {new Date(req.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                                    </td>
-                                                    <td className="py-4 text-sm font-semibold text-slate-700">
-                                                        {req.workingDays}d <span className="text-[10px] text-slate-400 font-normal">({req.totalDays} total)</span>
-                                                    </td>
-                                                    <td className="py-4 text-sm text-slate-500 max-w-[200px] truncate">
-                                                        {req.reason || '—'}
-                                                    </td>
-                                                    <td className="py-4 text-center">
-                                                        <StatusBadge status={req.status} />
-                                                    </td>
-                                                    <td className="py-4 text-sm text-slate-500">
-                                                        {req.approverName || '—'}
-                                                        {req.approvalComments && (
-                                                            <p className="text-[10px] text-slate-400 italic mt-0.5">"{req.approvalComments}"</p>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        }) : (
-                                            <tr>
-                                                <td colSpan="6" className="py-12 text-center">
-                                                    <AlertCircle className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                                    <p className="text-slate-500 text-sm">No leave requests yet.</p>
-                                                    <Button variant="accent" size="sm" className="mt-3" onClick={() => setShowModal(true)}>
-                                                        <Plus className="w-3.5 h-3.5 mr-1" />
-                                                        Submit Your First Request
-                                                    </Button>
-                                                </td>
+                        ) : requests.length > 0 ? (
+                            <>
+                                {/* Desktop Table */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/30">
+                                                <th className="px-6 py-4 border-b border-slate-100">Type</th>
+                                                <th className="px-6 py-4 border-b border-slate-100">Duration</th>
+                                                <th className="px-6 py-4 border-b border-slate-100">Days</th>
+                                                <th className="px-6 py-4 border-b border-slate-100">Reason</th>
+                                                <th className="px-6 py-4 border-b border-slate-100 text-center">Status</th>
+                                                <th className="px-6 py-4 border-b border-slate-100">Details</th>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {requests.map((req) => {
+                                                const ui = getLeaveTypeUI(req.leaveTypeCode);
+                                                const Icon = ui.icon;
+                                                return (
+                                                    <tr key={req.id} className="group hover:bg-slate-50/80 transition-all duration-200">
+                                                        <td className="px-6 py-5">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={cn("p-2 rounded-xl group-hover:scale-110 transition-transform duration-300", ui.bgLight, ui.textColor)}>
+                                                                    <Icon className="w-4 h-4" />
+                                                                </div>
+                                                                <span className="text-sm font-bold text-slate-900">
+                                                                    {user?.language === 'ar' ? req.leaveTypeNameAr : req.leaveTypeName}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-semibold text-slate-700">
+                                                                    {format(new Date(req.startDate), 'MMM d, yyyy')}
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">
+                                                                    to {format(new Date(req.endDate), 'MMM d, yyyy')}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            <div className="flex items-baseline gap-1">
+                                                                <span className="text-sm font-black text-slate-900">{req.workingDays}</span>
+                                                                <span className="text-[10px] text-slate-400 font-semibold italic">days</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            <p className="text-sm text-slate-500 max-w-[180px] truncate group-hover:text-slate-700 transition-colors">
+                                                                {req.reason || <span className="text-slate-300 italic opacity-50 text-xs">No reason provided</span>}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-6 py-5 text-center">
+                                                            <StatusBadge status={req.status} />
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            {req.approverName ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 border border-slate-200">
+                                                                        {req.approverName.charAt(0)}
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-xs font-semibold text-slate-700">{req.approverName}</span>
+                                                                        {req.approvalComments && <span className="text-[9px] text-slate-400 italic truncate max-w-[100px]">"{req.approvalComments}"</span>}
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">Waiting</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile List */}
+                                <div className="md:hidden divide-y divide-slate-100">
+                                    {requests.map((req) => {
+                                        const ui = getLeaveTypeUI(req.leaveTypeCode);
+                                        const Icon = ui.icon;
+                                        return (
+                                            <div key={req.id} className="p-5 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={cn("p-2 rounded-xl", ui.bgLight, ui.textColor)}>
+                                                            <Icon className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-sm font-bold text-slate-900">
+                                                                {user?.language === 'ar' ? req.leaveTypeNameAr : req.leaveTypeName}
+                                                            </h4>
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">
+                                                                {format(new Date(req.startDate), 'MMM d')} - {format(new Date(req.endDate), 'MMM d, yyyy')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <StatusBadge status={req.status} />
+                                                </div>
+                                                <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-lg font-black text-slate-900">{req.workingDays}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">Working Days</span>
+                                                    </div>
+                                                    {req.approverName && (
+                                                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                                                            {req.approverName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="py-20 text-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-slate-200">
+                                    <AlertCircle className="w-8 h-8 text-slate-300" />
+                                </div>
+                                <h3 className="text-base font-bold text-slate-600">No leave requests yet</h3>
+                                <p className="text-sm text-slate-400 mt-1 mb-6">Your history will appear here once you apply.</p>
+                                <Button variant="accent" size="sm" className="rounded-xl px-6" onClick={() => setShowModal(true)}>
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Launch First Request
+                                </Button>
                             </div>
                         )}
                     </CardContent>
                 </Card>
 
                 {/* Leave Policy Info */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm">Leave Policy</CardTitle>
+                <Card className="border-none shadow-sm ring-1 ring-slate-200/50 bg-slate-50/30 overflow-hidden">
+                    <CardHeader className="pb-4 border-b border-slate-100 bg-white">
+                        <CardTitle className="text-base font-display flex items-center gap-2">
+                            <Info className="w-5 h-5 text-accent" />
+                            Leave Policy Quick Guide
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div className="p-4 bg-blue-50 rounded-lg flex gap-3">
-                                <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                                <p className="text-xs text-slate-600 leading-relaxed">
-                                    <span className="font-bold text-blue-800">Annual Leave:</span> Submit at least <span className="font-bold">3 days</span> in advance.
-                                </p>
-                            </div>
-                            <div className="p-4 bg-red-50 rounded-lg flex gap-3">
-                                <Info className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                                <p className="text-xs text-slate-600 leading-relaxed">
-                                    <span className="font-bold text-red-800">Sick Leave:</span> Medical report required after 2 consecutive days.
-                                </p>
-                            </div>
-                            <div className="p-4 bg-emerald-50 rounded-lg flex gap-3">
-                                <Info className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                                <p className="text-xs text-slate-600 leading-relaxed">
-                                    <span className="font-bold text-emerald-800">Compensatory:</span> Requires prior overtime approval from your manager.
-                                </p>
-                            </div>
+                    <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[
+                                { color: 'blue', title: 'Annual Leave', text: 'Submit at least 3 days in advance.', bg: 'bg-blue-50', border: 'border-blue-100', textCol: 'text-blue-800' },
+                                { color: 'red', title: 'Sick Leave', text: 'Medical report required after 2 consecutive days.', bg: 'bg-red-50', border: 'border-red-100', textCol: 'text-red-800' },
+                                { color: 'emerald', title: 'Compensatory', text: 'Requires prior overtime approval from your manager.', bg: 'bg-emerald-50', border: 'border-emerald-100', textCol: 'text-emerald-800' }
+                            ].map((policy, idx) => (
+                                <div key={idx} className={cn("p-5 rounded-2xl border transition-all duration-300 hover:shadow-md bg-white hover:translate-y-[-2px]", policy.border)}>
+                                    <div className="flex items-start gap-4">
+                                        <div className={cn("p-2 rounded-xl mt-0.5 shadow-sm", policy.bg, policy.textCol)}>
+                                            <Info className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <h4 className={cn("text-sm font-black uppercase tracking-wider mb-2", policy.textCol)}>
+                                                {policy.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                                                {policy.text}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Request Modal */}
                 {showModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                                <div>
-                                    <h2 className="text-lg font-bold text-slate-900">Apply for Leave</h2>
-                                    <p className="text-sm text-slate-500">Fill in the details for your leave request</p>
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300" onClick={() => setShowModal(false)}>
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500" onClick={e => e.stopPropagation()}>
+                            <div className="relative p-8 border-b border-slate-100 bg-slate-50/50">
+                                <div className="absolute top-8 right-8">
+                                    <button onClick={() => setShowModal(false)} className="p-2 rounded-xl hover:bg-slate-200/50 transition-colors text-slate-400 hover:text-slate-900">
+                                        <X className="w-6 h-6" />
+                                    </button>
                                 </div>
-                                <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                                    <X className="w-5 h-5 text-slate-400" />
-                                </button>
+                                <h2 className="text-2xl font-black text-slate-900 font-display tracking-tight">Apply for Leave</h2>
+                                <p className="text-slate-500 mt-1 font-medium">Plan your time off with ease</p>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                            <form onSubmit={handleSubmit} className="p-8 space-y-6">
                                 {/* Leave Type */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Leave Type</label>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Select Type</label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                         {leaveTypes.map(type => {
                                             const ui = getLeaveTypeUI(type.code);
                                             const Icon = ui.icon;
@@ -522,14 +652,18 @@ const LeavePage = () => {
                                                     key={type.id}
                                                     onClick={() => setForm(f => ({ ...f, leaveTypeId: type.id }))}
                                                     className={cn(
-                                                        "p-3 rounded-xl border-2 text-center transition-all text-xs font-semibold",
+                                                        "p-4 rounded-2xl border-2 text-center transition-all duration-300 flex flex-col items-center gap-2 group",
                                                         isSelected
-                                                            ? `${ui.bgLight} ${ui.textColor} border-current`
-                                                            : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                                                            ? `${ui.bgLight} ${ui.textColor} border-current ring-4 ring-current/5 scale-[1.02] shadow-sm`
+                                                            : "bg-white border-slate-100 text-slate-500 hover:border-slate-200 hover:bg-slate-50"
                                                     )}
                                                 >
-                                                    <Icon className="w-4 h-4 mx-auto mb-1" />
-                                                    {user?.language === 'ar' ? type.nameAr : type.name}
+                                                    <div className={cn("p-2 rounded-xl transition-transform duration-300", isSelected ? "bg-white/50" : "bg-slate-100 group-hover:bg-white")}>
+                                                        <Icon className="w-5 h-5" />
+                                                    </div>
+                                                    <span className="text-[10px] font-bold tracking-tight uppercase line-clamp-1">
+                                                        {user?.language === 'ar' ? type.nameAr : type.name}
+                                                    </span>
                                                 </button>
                                             );
                                         })}
@@ -537,64 +671,90 @@ const LeavePage = () => {
                                 </div>
 
                                 {/* Dates */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Start Date</label>
-                                        <input
-                                            type="date"
-                                            value={form.startDate}
-                                            onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
-                                            required
-                                        />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Start Date</label>
+                                        <div className="relative group">
+                                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
+                                            <input
+                                                type="date"
+                                                value={form.startDate}
+                                                onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                                                className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none"
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">End Date</label>
-                                        <input
-                                            type="date"
-                                            value={form.endDate}
-                                            onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                                            min={form.startDate}
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
-                                            required
-                                        />
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">End Date</label>
+                                        <div className="relative group">
+                                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
+                                            <input
+                                                type="date"
+                                                value={form.endDate}
+                                                onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                                                min={form.startDate}
+                                                className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none"
+                                                required
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Days Preview */}
                                 {calculateDays() > 0 && (
-                                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/5 border border-accent/20">
-                                        <Calendar className="w-5 h-5 text-accent" />
-                                        <span className="text-sm font-semibold text-accent">
-                                            {calculateDays()} working day{calculateDays() > 1 ? 's' : ''}
+                                    <div className="flex items-center justify-between p-5 rounded-2xl bg-accent/5 border border-accent/10 animate-in slide-in-from-top-2 duration-300">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-accent/10 rounded-xl text-accent">
+                                                <CalendarCheck className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <span className="text-sm font-black text-accent block">Estimated Duration</span>
+                                                <span className="text-xs text-accent/70 font-bold uppercase tracking-tighter">Working days will be calculated</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-3xl font-black text-accent tracking-tighter">
+                                            {calculateDays()} <span className="text-[10px] uppercase font-black">Days</span>
                                         </span>
                                     </div>
                                 )}
 
                                 {/* Reason */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Reason (optional)</label>
+                                <div className="space-y-2">
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Reason / Note</label>
                                     <textarea
                                         rows={3}
                                         value={form.reason}
                                         onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
-                                        placeholder="Briefly describe the reason for your leave..."
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+                                        placeholder="Add any additional context for your request..."
+                                        className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-medium text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none resize-none"
                                     />
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex items-center justify-end gap-3 pt-2">
-                                    <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+                                <div className="flex items-center gap-4 pt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="flex-1 rounded-2xl py-7 text-sm font-bold border-slate-200 text-slate-500 hover:bg-slate-50"
+                                        onClick={() => setShowModal(false)}
+                                    >
                                         Cancel
                                     </Button>
-                                    <Button type="submit" variant="accent" disabled={isSubmitting}>
+                                    <Button
+                                        type="submit"
+                                        variant="accent"
+                                        className="flex-1 rounded-2xl py-7 text-sm font-black shadow-lg shadow-accent/20 hover:shadow-xl transition-all"
+                                        disabled={isSubmitting}
+                                    >
                                         {isSubmitting ? (
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            <Loader2 className="w-5 h-5 animate-spin" />
                                         ) : (
-                                            <Send className="w-4 h-4 mr-2" />
+                                            <>
+                                                <Send className="w-4 h-4 mr-2" />
+                                                SUBMIT REQUEST
+                                            </>
                                         )}
-                                        Submit Request
                                     </Button>
                                 </div>
                             </form>
@@ -604,86 +764,105 @@ const LeavePage = () => {
 
                 {/* Approval Modal */}
                 {showApprovalModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowApprovalModal(null)}>
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                                <h2 className="text-lg font-bold text-slate-900">Review Leave Request</h2>
-                                <button onClick={() => setShowApprovalModal(null)} className="p-2 rounded-lg hover:bg-slate-100">
-                                    <X className="w-5 h-5 text-slate-400" />
-                                </button>
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300" onClick={() => setShowApprovalModal(null)}>
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-white/20 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500" onClick={e => e.stopPropagation()}>
+                            <div className="p-8 border-b border-slate-100 bg-slate-50/50 relative">
+                                <div className="absolute top-8 right-8">
+                                    <button onClick={() => setShowApprovalModal(null)} className="p-2 rounded-xl hover:bg-slate-200/50 transition-colors text-slate-400 hover:text-slate-900">
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <h2 className="text-2xl font-black text-slate-900 font-display tracking-tight">Review Request</h2>
+                                <p className="text-slate-500 mt-1 font-medium">Verify and respond to the application</p>
                             </div>
 
-                            <div className="p-6 space-y-4">
+                            <div className="p-8 space-y-6">
                                 {/* Request Details */}
-                                <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Employee</span>
-                                        <span className="font-semibold text-slate-900">{showApprovalModal.employeeName}</span>
+                                <div className="space-y-4 p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100/50 shadow-inner">
+                                    <div className="flex justify-between items-center pb-3 border-b border-slate-200/50">
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Employee</span>
+                                        <span className="text-sm font-black text-slate-900">{showApprovalModal.employeeName}</span>
                                     </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Type</span>
-                                        <span className="font-semibold text-slate-900">{showApprovalModal.leaveTypeName}</span>
+                                    <div className="flex justify-between items-center pb-3 border-b border-slate-200/50">
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Type</span>
+                                        <div className="flex items-center gap-2">
+                                            {(() => {
+                                                const ui = getLeaveTypeUI(showApprovalModal.leaveTypeCode);
+                                                const Icon = ui.icon;
+                                                return (
+                                                    <div className={cn("px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 shadow-sm", ui.bgLight, ui.textColor)}>
+                                                        <Icon className="w-3 h-3" />
+                                                        {showApprovalModal.leaveTypeName}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Duration</span>
-                                        <span className="font-semibold text-slate-900">
-                                            {new Date(showApprovalModal.startDate).toLocaleDateString()} → {new Date(showApprovalModal.endDate).toLocaleDateString()}
+                                    <div className="flex justify-between items-center pb-3 border-b border-slate-200/50">
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Duration</span>
+                                        <span className="text-sm font-bold text-slate-700">
+                                            {format(new Date(showApprovalModal.startDate), 'MMM d')} - {format(new Date(showApprovalModal.endDate), 'MMM d, yyyy')}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Working Days</span>
-                                        <span className="font-semibold text-accent font-mono text-lg">{showApprovalModal.workingDays}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Total Calendar Days</span>
-                                        <span className="font-semibold text-slate-900">{showApprovalModal.totalDays}</span>
+                                    <div className="flex items-center justify-between pt-1">
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Working Days</span>
+                                        <div className="px-4 py-2 bg-accent/10 rounded-xl text-accent border border-accent/20">
+                                            <span className="text-2xl font-black">{showApprovalModal.workingDays}</span>
+                                            <span className="text-[9px] uppercase font-black ml-1.5 opacity-70">Days</span>
+                                        </div>
                                     </div>
                                     {showApprovalModal.reason && (
-                                        <div className="text-sm">
-                                            <span className="text-slate-500">Reason:</span>
-                                            <p className="text-slate-700 italic mt-1">"{showApprovalModal.reason}"</p>
+                                        <div className="pt-3">
+                                            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 block mb-2">Reason</span>
+                                            <div className="p-4 bg-white/50 rounded-xl border border-slate-200 italic text-sm text-slate-600 leading-relaxed shadow-sm">
+                                                "{showApprovalModal.reason}"
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Comment */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        <MessageSquare className="w-3.5 h-3.5 inline mr-1" />
-                                        Comment (optional)
+                                <div className="space-y-2">
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">
+                                        Add a Response Tip
                                     </label>
-                                    <textarea
-                                        rows={2}
-                                        value={approvalComment}
-                                        onChange={e => setApprovalComment(e.target.value)}
-                                        placeholder="Add a comment..."
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
-                                    />
+                                    <div className="relative group">
+                                        <MessageSquare className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
+                                        <textarea
+                                            rows={2}
+                                            value={approvalComment}
+                                            onChange={e => setApprovalComment(e.target.value)}
+                                            placeholder="Write an internal note or message to the employee..."
+                                            className="w-full pl-11 pr-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-medium text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none resize-none"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex items-center gap-3 pt-2">
+                                <div className="flex items-center gap-4 pt-2">
                                     <Button
-                                        variant="danger"
-                                        className="flex-1"
+                                        variant="outline"
+                                        className="flex-1 rounded-2xl py-7 text-sm font-bold border-rose-100 text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all"
                                         disabled={isSubmitting}
                                         onClick={() => handleReject(showApprovalModal.id)}
                                     >
-                                        <XCircle className="w-4 h-4 mr-2" />
-                                        Reject
+                                        <XCircle className="w-5 h-5 mr-2" />
+                                        REJECT
                                     </Button>
                                     <Button
                                         variant="accent"
-                                        className="flex-1"
+                                        className="flex-1 rounded-2xl py-7 text-sm font-black shadow-lg shadow-accent/20 hover:shadow-xl transition-all"
                                         disabled={isSubmitting}
                                         onClick={() => handleApprove(showApprovalModal.id)}
                                     >
                                         {isSubmitting ? (
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            <Loader2 className="w-5 h-5 animate-spin" />
                                         ) : (
-                                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                                            <>
+                                                <CheckCircle2 className="w-5 h-5 mr-2" />
+                                                APPROVE
+                                            </>
                                         )}
-                                        Approve
                                     </Button>
                                 </div>
                             </div>
