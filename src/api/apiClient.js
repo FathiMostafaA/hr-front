@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site';
+console.log('Using API Base URL:', API_URL);
+
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -90,7 +93,7 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
-                const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/Auth/refresh`, {}, {
+                const response = await axios.post(`${API_URL}/Auth/refresh`, {}, {
                     withCredentials: true
                 });
                 const { token } = response.data;
