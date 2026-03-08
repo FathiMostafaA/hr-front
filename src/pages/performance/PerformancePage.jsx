@@ -27,13 +27,13 @@ const PerformancePage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedReview, setSelectedReview] = useState(null);
 
-    const isManagerOrAdmin = user?.roles?.includes('Admin') || user?.roles?.includes('HRManager') || user?.roles?.includes('Manager');
+    const isManagerOrAdmin = user?.roles?.some(r => ['Admin', 'HRManager', 'HR', 'Manager'].includes(r));
 
     const fetchReviews = async () => {
         try {
             setLoading(true);
             let data = [];
-            if (user?.roles?.includes('Admin') || user?.roles?.includes('HRManager')) {
+            if (user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r))) {
                 data = await PerformanceService.getAllReviews();
             } else if (user?.roles?.includes('Manager')) {
                 const pending = await PerformanceService.getPendingReviews(user.id);

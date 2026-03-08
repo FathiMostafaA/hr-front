@@ -77,7 +77,7 @@ const LeavePage = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     const employeeId = user?.employeeId || user?.id;
-    const isAdmin = user?.roles?.includes('Admin') || user?.roles?.includes('HRManager');
+    const isAdmin = user?.roles?.includes('Admin') || user?.roles?.includes('HRManager') || user?.roles?.includes('HR');
     const currentYear = new Date().getFullYear();
 
     // Form state

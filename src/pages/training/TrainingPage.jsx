@@ -31,7 +31,7 @@ const TrainingPage = () => {
 
     // Auth & Enrollment
     const { user } = useAuth();
-    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager');
+    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
     const employeeId = user?.employeeId || user?.id;
     const [enrollments, setEnrollments] = useState([]);
     const [enrollingCourseId, setEnrollingCourseId] = useState(null);

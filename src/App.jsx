@@ -74,13 +74,13 @@ function App() {
 
           {/* Admin & HR Restricted Routes */}
           <Route path="employees" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <EmployeeList />
             </RoleProtectedRoute>
           } />
           <Route path="employees/:id" element={<EmployeeProfile />} />
           <Route path="departments" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <DepartmentList />
             </RoleProtectedRoute>
           } />
@@ -89,26 +89,26 @@ function App() {
           <Route path="leaves" element={<LeavePage />} />
 
           <Route path="payroll" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <PayrollPage />
             </RoleProtectedRoute>
           } />
           <Route path="my-payroll" element={<MyPayroll />} />
 
           <Route path="recruitment" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <RecruitmentPage />
             </RoleProtectedRoute>
           } />
 
           <Route path="performance" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'Manager', 'Employee']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR', 'Manager', 'Employee']}>
               <PerformancePage />
             </RoleProtectedRoute>
           } />
 
           <Route path="documents" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <DocumentPage />
             </RoleProtectedRoute>
           } />
@@ -125,13 +125,13 @@ function App() {
           <Route path="org-chart" element={<OrgChartPage />} />
 
           <Route path="training" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'Manager', 'Employee']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR', 'Manager', 'Employee']}>
               <TrainingPage />
             </RoleProtectedRoute>
           } />
 
           <Route path="sanctions" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'Manager', 'Employee']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR', 'Manager', 'Employee']}>
               <SanctionsPage />
             </RoleProtectedRoute>
           } />
@@ -143,7 +143,7 @@ function App() {
           } />
 
           <Route path="reports" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <ReportsPage />
             </RoleProtectedRoute>
           } />

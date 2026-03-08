@@ -68,7 +68,7 @@ const EmployeeProfile = () => {
     const [selectedFile, setSelectedFile] = useState(null);
 
     const { user } = useAuth(); // Get current user
-    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager');
+    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
     const isSelf = user?.employeeId === id;
 
     const canEditField = (fieldName) => {

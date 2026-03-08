@@ -96,7 +96,7 @@ const EmployeeList = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // RBAC: Check if user has management permissions
-    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager');
+    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
     const isSelf = currentEmployee && user?.employeeId === currentEmployee.id;
 
     const canEditField = (fieldName) => {

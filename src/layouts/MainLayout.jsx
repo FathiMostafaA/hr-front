@@ -67,28 +67,28 @@ const MainLayoutContent = () => {
 
     // RBAC: Define allowed roles for each route
     const allNavItems = useMemo(() => [
-        { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
-        { icon: Users, label: 'Employees', href: '/employees', roles: ['Admin', 'HRManager'] },
-        { icon: TrendingUp, label: 'Org Chart', href: '/org-chart', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
-        { icon: Building2, label: 'Departments', href: '/departments', roles: ['Admin', 'HRManager'] },
-        { icon: Clock, label: 'Attendance', href: '/attendance', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
-        { icon: CalendarDays, label: 'Leaves', href: '/leaves', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
+        { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
+        { icon: Users, label: 'Employees', href: '/employees', roles: ['Admin', 'HRManager', 'HR'] },
+        { icon: TrendingUp, label: 'Org Chart', href: '/org-chart', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
+        { icon: Building2, label: 'Departments', href: '/departments', roles: ['Admin', 'HRManager', 'HR'] },
+        { icon: Clock, label: 'Attendance', href: '/attendance', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
+        { icon: CalendarDays, label: 'Leaves', href: '/leaves', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
         {
             icon: Wallet,
             label: 'Payroll',
-            href: userRoles.some(r => ['Admin', 'HRManager'].includes(r)) ? '/payroll' : '/my-payroll',
-            roles: ['Admin', 'HRManager', 'Employee']
+            href: userRoles.some(r => ['Admin', 'HRManager', 'HR'].includes(r)) ? '/payroll' : '/my-payroll',
+            roles: ['Admin', 'HRManager', 'HR', 'Employee']
         },
-        { icon: Briefcase, label: 'Recruitment', href: '/recruitment', roles: ['Admin', 'HRManager'] },
-        { icon: TrendingUp, label: 'Performance', href: '/performance', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
-        { icon: FileText, label: 'Documents', href: '/documents', roles: ['Admin', 'HRManager'] },
-        { icon: GraduationCap, label: 'Training', href: '/training', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
-        { icon: ShieldAlert, label: 'Sanctions', href: '/sanctions', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
-        { icon: Newspaper, label: 'Company Feed', href: '/feed', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
+        { icon: Briefcase, label: 'Recruitment', href: '/recruitment', roles: ['Admin', 'HRManager', 'HR'] },
+        { icon: TrendingUp, label: 'Performance', href: '/performance', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
+        { icon: FileText, label: 'Documents', href: '/documents', roles: ['Admin', 'HRManager', 'HR'] },
+        { icon: GraduationCap, label: 'Training', href: '/training', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
+        { icon: ShieldAlert, label: 'Sanctions', href: '/sanctions', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
+        { icon: Newspaper, label: 'Company Feed', href: '/feed', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
         { icon: Users, label: 'User Accounts', href: '/users', roles: ['Admin'] },
-        { icon: BarChart3, label: 'Reports', href: '/reports', roles: ['Admin', 'HRManager'] },
+        { icon: BarChart3, label: 'Reports', href: '/reports', roles: ['Admin', 'HRManager', 'HR'] },
         { icon: History, label: 'Audit Logs', href: '/audit', roles: ['Admin'] },
-        { icon: Settings, label: 'Settings', href: '/settings', roles: ['Admin', 'HRManager', 'Manager', 'Employee'] },
+        { icon: Settings, label: 'Settings', href: '/settings', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
     ], [userRoles]);
     const navItems = useMemo(() => allNavItems.filter(item =>
         item.roles.some(role => userRoles.includes(role))
