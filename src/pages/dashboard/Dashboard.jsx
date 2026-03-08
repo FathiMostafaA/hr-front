@@ -44,29 +44,34 @@ const Dashboard = () => {
     const [isLoading, setIsLoading] = React.useState(true);
 
     const isAdminOrHR = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
+    const isManager = user?.roles?.some(r => r === 'Manager');
+    const showStats = isAdminOrHR || isManager;
 
     React.useEffect(() => {
         const fetchDashboardData = async () => {
+            setIsLoading(true);
             try {
-                // Fetch comprehensive analytics
-                const data = await AnalyticsService.getDashboardStats();
+                // Use the role-aware endpoint as primary source
+                const data = await AnalyticsService.getDashboardOverview();
                 setDashboardData(data);
+
+                // If Admin/HR, try to fetch even more detailed analytics
+                if (isAdminOrHR) {
+                    try {
+                        const complexStats = await AnalyticsService.getDashboardStats();
+                        setDashboardData(prev => ({ ...prev, ...complexStats }));
+                    } catch (e) {
+                        // Silent fail for complex analytics if restricted
+                    }
+                }
             } catch (error) {
                 console.error('Failed to fetch dashboard data', error);
-
-                // Fallback to basic stats if comprehensive fails
-                try {
-                    const basicData = await AnalyticsService.getDashboardOverview();
-                    setDashboardData(basicData);
-                } catch (basicError) {
-                    console.error('Basic stats also failed', basicError);
-                }
             } finally {
                 setIsLoading(false);
             }
         };
         fetchDashboardData();
-    }, []);
+    }, [isAdminOrHR]);
 
     const stats = [
         { title: 'Total Employees', value: dashboardData?.totalEmployees || 0, icon: Users, trend: 'up', trendValue: '+4%', color: 'bg-primary' },
@@ -99,13 +104,13 @@ const Dashboard = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-                        {isAdminOrHR ? 'Dashboard Overview' : 'Employee Overview'}
+                        {isAdminOrHR ? 'Dashboard Overview' : isManager ? 'Team Overview' : 'Employee Overview'}
                     </h1>
                     <p className="text-slate-500 mt-1">
                         Welcome back, <span className="text-accent font-semibold">{user?.fullName || 'User'}</span>! Here's what's happening today.
                     </p>
                 </div>
-                {!isAdminOrHR && (
+                {!isAdminOrHR && !isManager && (
                     <div className="flex gap-2">
                         <button
                             onClick={() => navigate('/leaves')}
@@ -117,8 +122,8 @@ const Dashboard = () => {
                 )}
             </div>
 
-            {/* Stats Grid - Only show to Admin/HR */}
-            {isAdminOrHR && (
+            {/* Stats Grid - Show to Privileged Roles */}
+            {showStats && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {stats.map((stat, i) => (
                         <StatCard key={i} {...stat} />
@@ -230,7 +235,7 @@ const Dashboard = () => {
                                 </button>
                             </>
                         )}
-                        {isAdminOrHR && dashboardData?.headcountByDepartment && (
+                        {showStats && dashboardData?.headcountByDepartment && (
                             <div className="mt-6 p-4 bg-slate-900 rounded-xl text-white">
                                 <div className="flex items-center gap-2 mb-2 text-amber-400">
                                     <AlertCircle className="w-4 h-4" />

@@ -40,6 +40,11 @@ const LeaveService = {
         return response.data;
     },
 
+    getMyPending: async () => {
+        const response = await apiClient.get('/Leaves/pending/me');
+        return response.data;
+    },
+
     initializeBalance: async (data) => {
         const response = await apiClient.post('/Leaves/balance/initialize', data);
         return response.data;

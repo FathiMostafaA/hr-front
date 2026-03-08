@@ -144,10 +144,15 @@ const LeavePage = () => {
             const balanceResults = await Promise.all(balancePromises);
             setBalances(balanceResults);
 
-            // If admin, also fetch pending requests
-            if (isAdmin) {
+            // If the user can approve (Manager/HR/Admin), fetch pending requests
+            if (canApprove) {
                 try {
-                    const rawPending = await LeaveService.getPending();
+                    // HR/Admin see everything, Managers see only their assignments
+                    const isHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
+                    const rawPending = isHR
+                        ? await LeaveService.getPending()
+                        : await LeaveService.getMyPending();
+
                     const normalizedPending = (rawPending || []).map(r => ({
                         id: r.id || r.Id,
                         employeeName: r.employeeName || r.EmployeeName,
@@ -170,7 +175,7 @@ const LeavePage = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [employeeId, isAdmin, currentYear]);
+    }, [employeeId, isAdmin, canApprove, currentYear, user?.roles]);
 
     useEffect(() => {
         if (leaveTypes.length > 0 && !form.leaveTypeId) {
@@ -420,8 +425,8 @@ const LeavePage = () => {
                     </CardContent>
                 </Card>
 
-                {/* Admin: Pending Requests */}
-                {isAdmin && pendingRequests.length > 0 && (
+                {/* Pending Requests for Managers/Admin */}
+                {canApprove && pendingRequests.length > 0 && (
                     <Card className="border-none shadow-lg shadow-amber-500/5 ring-1 ring-amber-200/50 bg-amber-50/20 overflow-hidden">
                         <CardHeader className="pb-4 bg-amber-50/50 border-b border-amber-100">
                             <CardTitle className="flex items-center gap-2 text-amber-900 font-display">
@@ -429,9 +434,9 @@ const LeavePage = () => {
                                     <Clock className="w-5 h-5 animate-pulse" />
                                 </div>
                                 Pending Approvals
-                                <Badge variant="secondary" className="bg-amber-200 text-amber-800 border-none ml-2">
+                                <span className="bg-amber-200 text-amber-800 px-2.5 py-0.5 rounded-full text-xs font-bold border-none ml-2">
                                     {pendingRequests.length}
-                                </Badge>
+                                </span>
                             </CardTitle>
                             <CardDescription className="text-amber-700/70">Requires your immediate action</CardDescription>
                         </CardHeader>
