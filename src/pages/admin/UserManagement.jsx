@@ -100,7 +100,9 @@ const UserManagement = () => {
             setIsAddModalOpen(false);
 
             if (response.invitationUrl) {
-                const fullUrl = `${window.location.origin}${response.invitationUrl}`;
+                const fullUrl = response.invitationUrl.startsWith('http')
+                    ? response.invitationUrl
+                    : `${window.location.origin}${response.invitationUrl}`;
                 setInvitationUrl(fullUrl);
                 setIsInvitationModalOpen(true);
             }
