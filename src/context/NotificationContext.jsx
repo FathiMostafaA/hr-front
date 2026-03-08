@@ -59,8 +59,9 @@ export const NotificationProvider = ({ children }) => {
             if (!token) return;
 
             try {
+                const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site';
                 const newConnection = new HubConnectionBuilder()
-                    .withUrl(`${import.meta.env.VITE_API_BASE_URL}/hubs/notification`, {
+                    .withUrl(`${baseUrl}/hubs/notification`, {
                         accessTokenFactory: () => token
                     })
                     .configureLogging(LogLevel.Information)
