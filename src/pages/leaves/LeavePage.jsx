@@ -77,7 +77,8 @@ const LeavePage = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     const employeeId = user?.employeeId || user?.id;
-    const isAdmin = user?.roles?.includes('Admin') || user?.roles?.includes('HRManager') || user?.roles?.includes('HR');
+    const isAdmin = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
+    const canApprove = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'Manager');
     const currentYear = new Date().getFullYear();
 
     // Form state
@@ -469,14 +470,16 @@ const LeavePage = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            <Button
-                                                variant="accent"
-                                                className="w-full sm:w-auto shadow-sm hover:shadow-md transition-all rounded-xl py-6 sm:py-2"
-                                                onClick={() => { setShowApprovalModal(req); setApprovalComment(''); }}
-                                            >
-                                                <UserCheck className="w-4 h-4 mr-2" />
-                                                Review
-                                            </Button>
+                                            {canApprove && (
+                                                <Button
+                                                    variant="accent"
+                                                    className="w-full sm:w-auto shadow-sm hover:shadow-md transition-all rounded-xl py-6 sm:py-2"
+                                                    onClick={() => { setShowApprovalModal(req); setApprovalComment(''); }}
+                                                >
+                                                    <UserCheck className="w-4 h-4 mr-2" />
+                                                    Review
+                                                </Button>
+                                            )}
                                         </div>
                                     );
                                 })}

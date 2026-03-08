@@ -69,6 +69,7 @@ const EmployeeProfile = () => {
 
     const { user } = useAuth(); // Get current user
     const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
+    const isHRManager = user?.roles?.some(r => r === 'Admin' || r === 'HRManager');
     const isSelf = user?.employeeId === id;
 
     const canEditField = (fieldName) => {
@@ -531,6 +532,12 @@ const EmployeeProfile = () => {
                         <Button variant="accent" size="sm" onClick={() => setShowUploadModal(true)}>
                             <Plus className="w-4 h-4 mr-2" />
                             Upload Document
+                        </Button>
+                    )}
+                    {activeTab === 'payroll' && isHRManager && (
+                        <Button variant="accent" size="sm" onClick={() => setShowComponentModal(true)}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Component
                         </Button>
                     )}
                     <Button variant="outline" size="sm" onClick={handleEditProfile}>Edit Profile</Button>
@@ -1235,24 +1242,26 @@ const EmployeeProfile = () => {
                                                         {comp.type === 'Earning' ? '+' : '-'}{employee.currency} {comp.amount.toLocaleString()}
                                                         {comp.isPercentage && '%'}
                                                     </p>
-                                                    <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 text-slate-400 hover:text-accent"
-                                                            onClick={() => handleEditComponent(comp)}
-                                                        >
-                                                            <Edit2 className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 text-slate-300 hover:text-rose-500"
-                                                            onClick={() => handleDeleteComponent(comp.id)}
-                                                        >
-                                                            <X className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    </div>
+                                                    {isHRManager && (
+                                                        <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-7 w-7 text-slate-400 hover:text-accent"
+                                                                onClick={() => handleEditComponent(comp)}
+                                                            >
+                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-7 w-7 text-slate-300 hover:text-rose-500"
+                                                                onClick={() => handleDeleteComponent(comp.id)}
+                                                            >
+                                                                <X className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </CardContent>
                                         </Card>

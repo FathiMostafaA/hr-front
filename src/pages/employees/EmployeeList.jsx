@@ -97,6 +97,7 @@ const EmployeeList = () => {
 
     // RBAC: Check if user has management permissions
     const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
+    const isHRManager = user?.roles?.some(r => r === 'Admin' || r === 'HRManager');
     const isSelf = currentEmployee && user?.employeeId === currentEmployee.id;
 
     const canEditField = (fieldName) => {
@@ -564,13 +565,15 @@ const EmployeeList = () => {
                                                     >
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeleteClick(emp)}
-                                                        className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all"
-                                                        title="Delete Employee"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {isHRManager && (
+                                                        <button
+                                                            onClick={() => handleDeleteClick(emp)}
+                                                            className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all"
+                                                            title="Delete Employee"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -620,7 +623,9 @@ const EmployeeList = () => {
                                     <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                                         <div className="flex gap-2">
                                             <button onClick={() => handleEdit(emp)} className="text-xs font-semibold text-accent hover:underline">Edit</button>
-                                            <button onClick={() => handleDeleteClick(emp)} className="text-xs font-semibold text-red-500 hover:underline">Delete</button>
+                                            {isHRManager && (
+                                                <button onClick={() => handleDeleteClick(emp)} className="text-xs font-semibold text-red-500 hover:underline">Delete</button>
+                                            )}
                                         </div>
                                         <Link
                                             to={`/employees/${emp.id}`}

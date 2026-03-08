@@ -27,13 +27,14 @@ const PerformancePage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedReview, setSelectedReview] = useState(null);
 
-    const isManagerOrAdmin = user?.roles?.some(r => ['Admin', 'HRManager', 'HR', 'Manager'].includes(r));
+    const isManagerOrAdmin = user?.roles?.some(r => ['Admin', 'HRManager', 'Manager'].includes(r));
+    const isHRRestricted = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
 
     const fetchReviews = async () => {
         try {
             setLoading(true);
             let data = [];
-            if (user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r))) {
+            if (isHRRestricted) {
                 data = await PerformanceService.getAllReviews();
             } else if (user?.roles?.includes('Manager')) {
                 const pending = await PerformanceService.getPendingReviews(user.id);
@@ -118,7 +119,7 @@ const PerformancePage = () => {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>{isManagerOrAdmin ? 'Department Reviews' : 'My Reviews'}</CardTitle>
+                        <CardTitle>{isHRRestricted ? 'Organization Reviews' : (user?.roles?.includes('Manager') ? 'Team & Personal Reviews' : 'My Reviews')}</CardTitle>
                         <CardDescription>Track the latest feedback cycles</CardDescription>
                     </div>
                 </CardHeader>
