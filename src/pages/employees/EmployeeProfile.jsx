@@ -204,7 +204,8 @@ const EmployeeProfile = () => {
             bankName: employee.bankName || '',
             bankAccountNumber: employee.bankAccountNumber || '',
             iban: employee.iban || '',
-            socialInsuranceNumber: employee.socialInsuranceNumber || ''
+            socialInsuranceNumber: employee.socialInsuranceNumber || '',
+            paymentMethodStr: employee.paymentMethodStr || 'BankTransfer'
         });
         setIsEditModalOpen(true);
     };
@@ -1003,18 +1004,30 @@ const EmployeeProfile = () => {
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <DollarSign className="w-5 h-5 text-accent" />
-                                Bank Account & IBAN
+                                Payment & Banking Details
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">Payment Method</p>
+                                    <Badge variant="outline" className="text-accent border-accent/20 bg-accent/5">
+                                        {employee.paymentMethodStr || 'Bank Transfer'}
+                                    </Badge>
+                                </div>
+                                <div className="space-y-1">
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">Bank Name</p>
                                     <p className="text-slate-900 font-medium">{employee.bankName || 'Not Set'}</p>
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">Account Number</p>
                                     <p className="text-slate-900 font-medium">{employee.bankAccountNumber || 'Not Set'}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">Currency</p>
+                                    <p className="text-slate-900 font-medium uppercase font-mono">{employee.currency}</p>
                                 </div>
                             </div>
                             <div className="space-y-1">
@@ -1615,6 +1628,25 @@ const EmployeeProfile = () => {
                                         onChange={(e) => setEditForm({ ...editForm, baseSalary: e.target.value })}
                                     />
                                 </div>
+                            </div>
+                        )}
+                        {canEditField('paymentMethodStr') && (
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center">
+                                    Payment Method
+                                    {renderLockIcon('paymentMethodStr')}
+                                </label>
+                                <select
+                                    disabled={!canEditField('paymentMethodStr')}
+                                    className={`w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/20 outline-none ${!canEditField('paymentMethodStr') ? "cursor-not-allowed text-slate-500" : ""}`}
+                                    value={editForm.paymentMethodStr}
+                                    onChange={(e) => setEditForm({ ...editForm, paymentMethodStr: e.target.value })}
+                                >
+                                    <option value="BankTransfer">Bank Transfer</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Fawry">Fawry</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                         )}
                     </div>
