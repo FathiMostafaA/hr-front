@@ -911,7 +911,7 @@ const EmployeeProfile = () => {
                             <CardContent>
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase">Base Salary (Annual)</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase">Base Salary (Monthly)</p>
                                         <p className="text-2xl font-bold mt-1">{employee.currency} {employee.baseSalary?.toLocaleString()}</p>
                                     </div>
                                     <div className="pt-4 border-t border-slate-800">
