@@ -96,11 +96,6 @@ const LeavePage = () => {
             const types = await LeaveService.getLeaveTypes();
             setLeaveTypes(types || []);
 
-            // Set default leave type in form if not set
-            if (types.length > 0 && !form.leaveTypeId) {
-                setForm(f => ({ ...f, leaveTypeId: types[0].id }));
-            }
-
             // Fetch leave history
             const history = await LeaveService.getHistory(employeeId);
             setRequests(history || []);
@@ -136,7 +131,13 @@ const LeavePage = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [employeeId, isAdmin, currentYear, form.leaveTypeId]);
+    }, [employeeId, isAdmin, currentYear]);
+
+    useEffect(() => {
+        if (leaveTypes.length > 0 && !form.leaveTypeId) {
+            setForm(f => ({ ...f, leaveTypeId: leaveTypes[0].id }));
+        }
+    }, [leaveTypes, form.leaveTypeId]);
 
     useEffect(() => {
         fetchData();
