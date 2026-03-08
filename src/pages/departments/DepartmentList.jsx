@@ -24,11 +24,14 @@ import Modal from '../../components/ui/Modal';
 import { cn } from '../../utils/cn';
 import DepartmentService from '../../api/services/departmentService';
 import EmployeeService from '../../api/services/employeeService';
+import { useAuth } from '../../context/AuthContext';
 
 const DepartmentList = () => {
     const [departments, setDepartments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const { user } = useAuth();
+    const isAdminOrHR = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
 
     // Auth/CRUD Modals
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -219,10 +222,12 @@ const DepartmentList = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="accent" onClick={handleAdd}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        New Department
-                    </Button>
+                    {isAdminOrHR && (
+                        <Button variant="accent" onClick={handleAdd}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            New Department
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -255,22 +260,24 @@ const DepartmentList = () => {
                                 <div className="p-2 rounded-lg bg-white border border-slate-200">
                                     <Building2 className="w-5 h-5 text-accent" />
                                 </div>
-                                <div className="flex gap-1">
-                                    <button
-                                        onClick={() => handleEdit(dept)}
-                                        className="p-1.5 text-slate-400 hover:text-accent hover:bg-white rounded-md transition-all"
-                                        title="Edit Department"
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteClick(dept)}
-                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white rounded-md transition-all"
-                                        title="Delete Department"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                {isAdminOrHR && (
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => handleEdit(dept)}
+                                            className="p-1.5 text-slate-400 hover:text-accent hover:bg-white rounded-md transition-all"
+                                            title="Edit Department"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteClick(dept)}
+                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white rounded-md transition-all"
+                                            title="Delete Department"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
                             </CardHeader>
                             <CardContent className="pt-4">
                                 <div className="mb-4">
@@ -285,12 +292,14 @@ const DepartmentList = () => {
                                             <Users2 size={14} className="text-slate-400" />
                                             {dept.managerName || 'No Manager Assigned'}
                                         </div>
-                                        <button
-                                            onClick={() => handleAssignManager(dept)}
-                                            className="text-accent hover:underline font-semibold"
-                                        >
-                                            {dept.managerName ? 'Change Manager' : 'Assign Manager'}
-                                        </button>
+                                        {isAdminOrHR && (
+                                            <button
+                                                onClick={() => handleAssignManager(dept)}
+                                                className="text-accent hover:underline font-semibold"
+                                            >
+                                                {dept.managerName ? 'Change Manager' : 'Assign Manager'}
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="flex gap-2">
                                         <div className="flex items-center gap-2 text-sm text-slate-600 pr-2 border-r border-slate-100">

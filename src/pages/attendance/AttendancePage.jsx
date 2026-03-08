@@ -36,7 +36,7 @@ const AttendancePage = () => {
     });
     const [adminDateTo, setAdminDateTo] = useState(() => new Date().toISOString().split('T')[0]);
 
-    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager');
+    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
     const employeeId = user?.employeeId || user?.id;
 
     // Live clock

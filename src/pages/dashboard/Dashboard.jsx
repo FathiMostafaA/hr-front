@@ -43,7 +43,7 @@ const Dashboard = () => {
     const [dashboardData, setDashboardData] = React.useState(null);
     const [isLoading, setIsLoading] = React.useState(true);
 
-    const isAdminOrHR = user?.roles?.some(r => ['Admin', 'HRManager'].includes(r));
+    const isAdminOrHR = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
 
     React.useEffect(() => {
         const fetchDashboardData = async () => {

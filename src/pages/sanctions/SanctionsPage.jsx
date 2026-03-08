@@ -7,6 +7,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import sanctionService from '../../api/services/sanctionService';
 import employeeService from '../../api/services/employeeService';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
 const SanctionsPage = () => {
@@ -16,6 +17,8 @@ const SanctionsPage = () => {
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false);
     const [selectedViolation, setSelectedViolation] = useState(null);
+    const { user } = useAuth();
+    const isAdminOrHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
 
     const [violationForm, setViolationForm] = useState({
         employeeId: '',
@@ -124,10 +127,12 @@ const SanctionsPage = () => {
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Violations & Sanctions</h1>
                     <p className="text-slate-500 mt-1">Maintain workplace standards and record disciplinary actions.</p>
                 </div>
-                <Button variant="danger" onClick={() => setIsViolationModalOpen(true)} className="shadow-lg shadow-red-200">
-                    <AlertTriangle className="w-5 h-5 mr-2" />
-                    Record Violation
-                </Button>
+                {isAdminOrHR && (
+                    <Button variant="danger" onClick={() => setIsViolationModalOpen(true)} className="shadow-lg shadow-red-200">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Record Violation
+                    </Button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -210,7 +215,7 @@ const SanctionsPage = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
-                                            {!v.sanction && (
+                                            {isAdminOrHR && !v.sanction && (
                                                 <Button
                                                     variant="secondary"
                                                     size="sm"
@@ -222,12 +227,14 @@ const SanctionsPage = () => {
                                                     Apply Sanction
                                                 </Button>
                                             )}
-                                            <button
-                                                onClick={() => handleDeleteClick(v)}
-                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            {isAdminOrHR && (
+                                                <button
+                                                    onClick={() => handleDeleteClick(v)}
+                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

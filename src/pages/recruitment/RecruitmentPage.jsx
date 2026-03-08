@@ -12,12 +12,15 @@ import RecruitmentService from '../../api/services/recruitmentService';
 import AuthService from '../../api/services/authService';
 import departmentService from '../../api/services/departmentService';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 const RecruitmentPage = () => {
     const [jobs, setJobs] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedJob, setSelectedJob] = useState(null);
+    const { user } = useAuth();
+    const isAdminOrHR = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
     const [candidates, setCandidates] = useState([]);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -203,10 +206,12 @@ const RecruitmentPage = () => {
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Recruitment</h1>
                     <p className="text-slate-500 mt-1">Manage job postings and track candidate pipeline.</p>
                 </div>
-                <Button variant="accent" onClick={() => setIsJobModalOpen(true)} className="shadow-lg shadow-accent/20">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Create Job Post
-                </Button>
+                {isAdminOrHR && (
+                    <Button variant="accent" onClick={() => setIsJobModalOpen(true)} className="shadow-lg shadow-accent/20">
+                        <Plus className="w-5 h-5 mr-2" />
+                        Create Job Post
+                    </Button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -268,22 +273,24 @@ const RecruitmentPage = () => {
                                             >
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            {job.status === 'Open' ? (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleUpdateJobStatus(job, 'Closed'); }}
-                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Close Job"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleUpdateJobStatus(job, 'Open'); }}
-                                                    className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors"
-                                                    title="Reopen Job"
-                                                >
-                                                    <Play className="w-4 h-4" />
-                                                </button>
+                                            {isAdminOrHR && (
+                                                job.status === 'Open' ? (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleUpdateJobStatus(job, 'Closed'); }}
+                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Close Job"
+                                                    >
+                                                        <XCircle className="w-4 h-4" />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleUpdateJobStatus(job, 'Open'); }}
+                                                        className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                        title="Reopen Job"
+                                                    >
+                                                        <Play className="w-4 h-4" />
+                                                    </button>
+                                                )
                                             )}
                                             <ArrowRight className={`w-4 h-4 ml-2 transition-transform ${selectedJob?.id === job.id ? 'translate-x-1 text-accent' : 'text-slate-200'}`} />
                                         </td>
@@ -300,9 +307,11 @@ const RecruitmentPage = () => {
                             <CardHeader className="pb-2">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-sm font-black uppercase text-accent tracking-tighter">Candidate Pipeline</CardTitle>
-                                    <Button size="sm" variant="accent" className="h-7 px-2 flex items-center gap-1" onClick={() => setIsApplyModalOpen(true)}>
-                                        <UserPlus className="w-3 h-3" /> Add
-                                    </Button>
+                                    {isAdminOrHR && (
+                                        <Button size="sm" variant="accent" className="h-7 px-2 flex items-center gap-1" onClick={() => setIsApplyModalOpen(true)}>
+                                            <UserPlus className="w-3 h-3" /> Add
+                                        </Button>
+                                    )}
                                 </div>
                                 <p className="text-xs text-slate-400 font-bold">{selectedJob.jobTitle}</p>
                             </CardHeader>
@@ -338,9 +347,11 @@ const RecruitmentPage = () => {
                                             {c.currentStage === 'Hired' ? (
                                                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                                             ) : (
-                                                <Button size="sm" variant="accent" className="h-7 px-3 text-[10px] font-black uppercase" onClick={() => openHireModal(c)}>
-                                                    Hire
-                                                </Button>
+                                                isAdminOrHR && (
+                                                    <Button size="sm" variant="accent" className="h-7 px-3 text-[10px] font-black uppercase" onClick={() => openHireModal(c)}>
+                                                        Hire
+                                                    </Button>
+                                                )
                                             )}
                                         </div>
                                     </div>
