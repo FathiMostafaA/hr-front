@@ -263,6 +263,23 @@ const EmployeeProfile = () => {
         }
     };
 
+    const handleDownloadDocument = async (docId, fileName) => {
+        try {
+            const blob = await DocumentService.downloadDocument(docId);
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName || 'document');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download error:', error);
+            toast.error('Failed to download document');
+        }
+    };
+
     const handleCreateComponent = async (e) => {
         e.preventDefault();
         if (!componentForm.name || !componentForm.amount) {
@@ -1102,7 +1119,7 @@ const EmployeeProfile = () => {
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-accent" onClick={() => (window.location.href = doc.fileUrl)}>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-accent" onClick={() => handleDownloadDocument(doc.id, doc.documentName)}>
                                                     <Download className="w-4 h-4" />
                                                 </Button>
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-rose-500" onClick={() => handleDeleteDocument(doc.id)}>
