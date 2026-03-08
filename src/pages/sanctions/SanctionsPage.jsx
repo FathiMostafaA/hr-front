@@ -13,7 +13,7 @@ import { toast } from 'react-hot-toast';
 const SanctionsPage = () => {
     const [violations, setViolations] = useState([]);
     const [employees, setEmployees] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // const [isLoading, setIsLoading] = useState(true);
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false);
     const [selectedViolation, setSelectedViolation] = useState(null);
@@ -47,7 +47,7 @@ const SanctionsPage = () => {
     }, []);
 
     const fetchData = async () => {
-        setIsLoading(true);
+        // setIsLoading(true);
         try {
             const [violationData, employeeData] = await Promise.all([
                 sanctionService.getAllViolations(),
@@ -55,10 +55,10 @@ const SanctionsPage = () => {
             ]);
             setViolations(violationData);
             setEmployees(employeeData);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load data');
         } finally {
-            setIsLoading(false);
+            // setIsLoading(false);
         }
     };
 
@@ -69,7 +69,7 @@ const SanctionsPage = () => {
             toast.success('Violation recorded successfully');
             setIsViolationModalOpen(false);
             fetchData();
-        } catch (error) {
+        } catch {
             toast.error('Failed to record violation');
         }
     };
@@ -84,7 +84,7 @@ const SanctionsPage = () => {
             toast.success('Sanction applied');
             setIsSanctionModalOpen(false);
             fetchData();
-        } catch (error) {
+        } catch {
             toast.error('Failed to apply sanction');
         }
     };
@@ -102,8 +102,8 @@ const SanctionsPage = () => {
             toast.success('Incident record removed');
             setIsDeleteModalOpen(false);
             fetchData();
-        } catch (error) {
-            const errorMsg = error.response?.data?.title || error.response?.data || 'Failed to delete incident';
+        } catch (err) {
+            const errorMsg = err.response?.data?.title || err.response?.data || 'Failed to delete incident';
             toast.error(typeof errorMsg === 'string' ? errorMsg : 'Failed to delete incident');
         } finally {
             setIsDeleting(false);

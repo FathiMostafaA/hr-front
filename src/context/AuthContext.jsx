@@ -8,9 +8,26 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const currentUser = AuthService.getCurrentUser();
-        setUser(currentUser);
-        setLoading(false);
+        const initAuth = async () => {
+            try {
+                // Try to refresh token on startup using cookie
+                const data = await AuthService.refresh();
+                if (data && data.user) {
+                    setUser(data.user);
+                }
+            } catch (err) {
+                console.log('Silent refresh failed:', err);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (AuthService.getCurrentUser()) {
+            initAuth();
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const login = async (credentials) => {

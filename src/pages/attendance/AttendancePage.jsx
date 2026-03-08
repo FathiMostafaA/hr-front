@@ -65,8 +65,8 @@ const AttendancePage = () => {
                 now.toISOString().split('T')[0]
             );
             setHistory(data || []);
-        } catch (error) {
-            console.error('Failed to fetch attendance data', error);
+        } catch (err) {
+            console.error('Failed to fetch attendance data', err);
         } finally {
             setIsLoading(false);
         }
@@ -78,7 +78,7 @@ const AttendancePage = () => {
         try {
             const data = await AttendanceService.getAll(adminDateFrom, adminDateTo);
             setAllRecords(data || []);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load attendance records');
         } finally {
             setAdminLoading(false);
@@ -99,8 +99,8 @@ const AttendancePage = () => {
             setTodayRecord(result);
             toast.success('Clocked in successfully! 🟢');
             fetchData();
-        } catch (error) {
-            const msg = error.response?.data || 'Failed to clock in';
+        } catch (err) {
+            const msg = err.response?.data || 'Failed to clock in';
             toast.error(typeof msg === 'string' ? msg : 'Failed to clock in');
         } finally {
             setIsClocking(false);
@@ -115,8 +115,8 @@ const AttendancePage = () => {
             setTodayRecord(result);
             toast.success(`Clocked out! Worked ${formatHours(result.workHours)} today. 🔴`);
             fetchData();
-        } catch (error) {
-            const msg = error.response?.data || 'Failed to clock out';
+        } catch (err) {
+            const msg = err.response?.data || 'Failed to clock out';
             toast.error(typeof msg === 'string' ? msg : 'Failed to clock out');
         } finally {
             setIsClocking(false);

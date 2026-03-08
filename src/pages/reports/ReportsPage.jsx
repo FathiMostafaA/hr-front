@@ -22,11 +22,7 @@ const ReportsPage = () => {
     });
     const [leaveToDate, setLeaveToDate] = useState(today.toISOString().split('T')[0]);
 
-    useEffect(() => {
-        fetchReports();
-    }, [selectedYear, selectedMonth]);
-
-    const fetchReports = async () => {
+    const fetchReports = React.useCallback(async () => {
         setIsLoading(true);
         try {
             const [empData, payData] = await Promise.all([
@@ -35,13 +31,17 @@ const ReportsPage = () => {
             ]);
             setEmployeeSummary(empData);
             setPayrollSummary(payData);
-        } catch (error) {
+        } catch (err) {
             toast.error('Failed to load summary reports');
-            console.error(error);
+            console.error(err);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedYear, selectedMonth]);
+
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
 
     const handleDownload = async (action, filename) => {
         try {
@@ -54,7 +54,7 @@ const ReportsPage = () => {
             link.click();
             link.parentNode.removeChild(link);
             toast.success(`${filename} downloaded successfully!`);
-        } catch (error) {
+        } catch {
             toast.error(`Failed to download ${filename}`);
         }
     };

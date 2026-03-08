@@ -36,21 +36,34 @@ const TrainingPage = () => {
     const [enrollments, setEnrollments] = useState([]);
     const [enrollingCourseId, setEnrollingCourseId] = useState(null);
 
+    const fetchCourses = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await trainingService.getCourses();
+            setCourses(data);
+        } catch {
+            toast.error('Failed to load training courses');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    const fetchEnrollments = React.useCallback(async () => {
+        if (!employeeId) return;
+        try {
+            const data = await trainingService.getEmployeeEnrollments(employeeId);
+            setEnrollments(data || []);
+        } catch (err) {
+            console.error('Failed to load enrollments', err);
+        }
+    }, [employeeId]);
+
     useEffect(() => {
         fetchCourses();
         if (employeeId) {
             fetchEnrollments();
         }
-    }, [employeeId]);
-
-    const fetchEnrollments = async () => {
-        try {
-            const data = await trainingService.getEmployeeEnrollments(employeeId);
-            setEnrollments(data || []);
-        } catch (error) {
-            console.error('Failed to load enrollments', error);
-        }
-    };
+    }, [employeeId, fetchCourses, fetchEnrollments]);
 
     const handleEnroll = async (e, courseId) => {
         e.stopPropagation();
@@ -60,25 +73,14 @@ const TrainingPage = () => {
             toast.success('Successfully enrolled in course');
             fetchEnrollments();
             fetchCourses(); // to update enrolledCount
-        } catch (error) {
-            const errorMsg = error.response?.data?.title || error.response?.data || 'Failed to enroll';
+        } catch (err) {
+            const errorMsg = err.response?.data?.title || err.response?.data || 'Failed to enroll';
             toast.error(typeof errorMsg === 'string' ? errorMsg : 'Failed to enroll');
         } finally {
             setEnrollingCourseId(null);
         }
     };
 
-    const fetchCourses = async () => {
-        setIsLoading(true);
-        try {
-            const data = await trainingService.getCourses();
-            setCourses(data);
-        } catch (error) {
-            toast.error('Failed to load training courses');
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handleCreateCourse = async (e) => {
         e.preventDefault();
@@ -87,7 +89,7 @@ const TrainingPage = () => {
             toast.success('Training course created');
             setIsModalOpen(false);
             fetchCourses();
-        } catch (error) {
+        } catch {
             toast.error('Failed to create course');
         }
     };
@@ -105,8 +107,8 @@ const TrainingPage = () => {
             toast.success('Course deleted');
             setIsDeleteModalOpen(false);
             fetchCourses();
-        } catch (error) {
-            const errorMsg = error.response?.data?.title || error.response?.data || 'Failed to delete course';
+        } catch (err) {
+            const errorMsg = err.response?.data?.title || err.response?.data || 'Failed to delete course';
             toast.error(typeof errorMsg === 'string' ? errorMsg : 'Failed to delete course');
         } finally {
             setIsDeleting(false);

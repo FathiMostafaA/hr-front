@@ -165,14 +165,14 @@ const LeavePage = () => {
                         reason: r.reason || r.Reason
                     }));
                     setPendingRequests(normalizedPending);
-                } catch (error) {
-                    console.error('Failed to fetch pending requests', error);
+                } catch (err) {
+                    console.error('Failed to fetch pending requests', err);
                     setPendingRequests([]);
                 }
             }
-        } catch (error) {
-            console.error('Failed to fetch leave data', error);
-            const msg = error.response?.data;
+        } catch (err) {
+            console.error('Failed to fetch leave data', err);
+            const msg = err.response?.data;
             toast.error(typeof msg === 'string' ? msg : 'Failed to load leave configuration');
         } finally {
             setIsLoading(false);
@@ -215,8 +215,8 @@ const LeavePage = () => {
             setShowModal(false);
             setForm(f => ({ ...f, startDate: '', endDate: '', reason: '' }));
             fetchData();
-        } catch (error) {
-            const msg = error.response?.data;
+        } catch (err) {
+            const msg = err.response?.data;
             toast.error(typeof msg === 'string' ? msg : 'Failed to submit leave request');
         } finally {
             setIsSubmitting(false);
@@ -231,7 +231,7 @@ const LeavePage = () => {
             setShowApprovalModal(null);
             setApprovalComment('');
             fetchData();
-        } catch (error) {
+        } catch {
             toast.error('Failed to approve leave request');
         } finally {
             setIsSubmitting(false);
@@ -246,7 +246,7 @@ const LeavePage = () => {
             setShowApprovalModal(null);
             setApprovalComment('');
             fetchData();
-        } catch (error) {
+        } catch {
             toast.error('Failed to reject leave request');
         } finally {
             setIsSubmitting(false);

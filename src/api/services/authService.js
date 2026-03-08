@@ -1,11 +1,10 @@
-import apiClient from '../apiClient';
+import apiClient, { setAccessToken } from '../apiClient';
 
 const AuthService = {
     login: async (credentials) => {
         const response = await apiClient.post('/Auth/login', credentials);
         if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('refreshToken', response.data.refreshToken);
+            setAccessToken(response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
         }
         return response.data;
@@ -30,20 +29,16 @@ const AuthService = {
         try {
             await apiClient.post('/Auth/logout');
         } finally {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
+            setAccessToken(null);
             localStorage.removeItem('user');
             window.location.href = '/login';
         }
     },
 
     refresh: async () => {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const response = await apiClient.post('/Auth/refresh', `"${refreshToken}"`, {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        const response = await apiClient.post('/Auth/refresh');
         if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
+            setAccessToken(response.data.token);
         }
         return response.data;
     },
@@ -54,7 +49,9 @@ const AuthService = {
     },
 
     isAuthenticated: () => {
-        return !!localStorage.getItem('token');
+        // Since token is in memory, we might need a different check or rely on Context
+        const user = localStorage.getItem('user');
+        return !!user;
     },
 };
 

@@ -45,8 +45,8 @@ const PayrollPage = () => {
             ]);
             setPayrollHistory(historyData);
             setSummary(summaryData);
-        } catch (error) {
-            console.error('Failed to fetch payroll data', error);
+        } catch (err) {
+            console.error('Failed to fetch payroll data', err);
             toast.error('Failed to load payroll records');
         } finally {
             setIsLoading(false);
@@ -61,8 +61,8 @@ const PayrollPage = () => {
             const count = await PayrollService.processMonthly(currentYear, currentMonth);
             toast.success(`Successfully processed payroll for ${count} employees!`);
             fetchData();
-        } catch (error) {
-            console.error('Payroll processing failed', error);
+        } catch (err) {
+            console.error('Payroll processing failed', err);
             toast.error('Failed to process monthly payroll');
         } finally {
             setIsLoading(false);
@@ -86,9 +86,9 @@ const PayrollPage = () => {
             link.click();
             link.parentNode.removeChild(link);
             toast.success('Payslip downloaded successfully');
-        } catch (error) {
+        } catch (err) {
             toast.error('Failed to download payslip PDF');
-            console.error(error);
+            console.error(err);
         }
     };
 

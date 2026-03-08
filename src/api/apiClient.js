@@ -1,17 +1,23 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://api.eventra.site/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true,
 });
+
+let _accessToken = null;
+
+export const setAccessToken = (token) => {
+    _accessToken = token;
+};
 
 apiClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        if (_accessToken) {
+            config.headers.Authorization = `Bearer ${_accessToken}`;
         }
         return config;
     },
@@ -80,23 +86,19 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // Handle 401 Unauthorized (Token Refresh)
+        // Handle 401 Unauthorized (Token Refresh via Cookie)
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
-                const refreshToken = localStorage.getItem('refreshToken');
-                if (!refreshToken) throw new Error('No refresh token');
-
-                const response = await axios.post('https://api.eventra.site/api/Auth/refresh', `"${refreshToken}"`, {
-                    headers: { 'Content-Type': 'application/json' }
+                const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/Auth/refresh`, {}, {
+                    withCredentials: true
                 });
                 const { token } = response.data;
-                localStorage.setItem('token', token);
+                setAccessToken(token);
                 originalRequest.headers.Authorization = `Bearer ${token}`;
                 return apiClient(originalRequest);
             } catch (refreshError) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
+                setAccessToken(null);
                 localStorage.removeItem('user');
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
