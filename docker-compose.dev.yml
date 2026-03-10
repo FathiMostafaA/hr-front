@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  frontend_dev:
+    build:
+      context: .
+      dockerfile: DockerFile.staging
+      args:
+        - VITE_API_BASE_URL=https://staging-api.eventra.site
+    container_name: hr_frontend_dev
+    ports:
+      - "8083:80"
+    networks:
+      - hr_dev_network
+
+networks:
+  hr_dev_network:
+    external: true
+    name: hr_dev_network

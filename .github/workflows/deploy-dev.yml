@@ -1,0 +1,48 @@
+name: Deploy HR Frontend to Staging
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Staging Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 2222
+          script: |
+            # Setup dev directory if not exists
+            if [ ! -d ~/hr-front-dev ]; then
+              git clone -b dev https://github.com/${{ github.repository }}.git ~/hr-front-dev
+            fi
+
+            cd ~/hr-front-dev
+            git fetch origin
+            git checkout dev
+            git pull origin dev
+
+            # Create .env file pointing to staging API
+            echo "VITE_API_BASE_URL=https://staging-api.eventra.site" > .env
+
+            # Rebuild and restart
+            docker compose -f docker-compose.dev.yml down
+            docker compose -f docker-compose.dev.yml up -d --build
+
+            echo "Waiting for container to start..."
+            sleep 10
+
+            if docker ps | grep -q hr_frontend_dev; then
+              echo "✅ Staging Frontend container is running"
+            else
+              echo "❌ Staging Frontend container failed to start"
+              docker logs hr_frontend_dev --tail 50
+              exit 1
+            fi
