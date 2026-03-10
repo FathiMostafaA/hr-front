@@ -23,6 +23,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import LeaveService from '../../api/services/leaveService';
+import EmployeeService from '../../api/services/employeeService';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { cn } from '../../utils/cn';
@@ -72,6 +73,9 @@ const LeavePage = () => {
     const [showApprovalModal, setShowApprovalModal] = useState(null);
     const [approvalComment, setApprovalComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [employees, setEmployees] = useState([]);
     const { user } = useAuth();
 
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -83,6 +87,7 @@ const LeavePage = () => {
 
     // Form state
     const [form, setForm] = useState({
+        employeeId: '',
         leaveTypeId: '',
         startDate: '',
         endDate: '',
@@ -170,6 +175,16 @@ const LeavePage = () => {
                     setPendingRequests([]);
                 }
             }
+
+            // If HR/Admin, fetch all employees for "Apply for Others"
+            if (isAdmin) {
+                try {
+                    const allEmployees = await EmployeeService.getAll();
+                    setEmployees(allEmployees);
+                } catch (err) {
+                    console.error('Failed to fetch employees', err);
+                }
+            }
         } catch (err) {
             console.error('Failed to fetch leave data', err);
             const msg = err.response?.data;
@@ -206,6 +221,7 @@ const LeavePage = () => {
         setIsSubmitting(true);
         try {
             await LeaveService.request({
+                employeeId: isAdmin ? form.employeeId || employeeId : employeeId,
                 leaveTypeId: form.leaveTypeId,
                 startDate: form.startDate,
                 endDate: form.endDate,
@@ -213,7 +229,7 @@ const LeavePage = () => {
             });
             toast.success('Leave request submitted successfully! ✅');
             setShowModal(false);
-            setForm(f => ({ ...f, startDate: '', endDate: '', reason: '' }));
+            setForm(f => ({ ...f, startDate: '', endDate: '', reason: '', employeeId: '' }));
             fetchData();
         } catch (err) {
             const msg = err.response?.data;
@@ -253,36 +269,83 @@ const LeavePage = () => {
         }
     };
 
+    const handleCancel = async (id) => {
+        if (!window.confirm('Are you sure you want to cancel this leave request?')) return;
+
+        setIsSubmitting(true);
+        try {
+            await LeaveService.cancel(id);
+            toast.success('Leave request cancelled successfully');
+            fetchData();
+        } catch (err) {
+            toast.error(err.response?.data || 'Failed to cancel leave request');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const calculateDays = () => {
         if (!form.startDate || !form.endDate) return 0;
         const start = new Date(form.startDate);
         const end = new Date(form.endDate);
-        const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-        return Math.max(0, diff);
-    };
+        if (end < start) return 0;
 
-    const getLeaveTypeById = (id) => leaveTypes.find(t => t.id === id);
+        let count = 0;
+        let cur = new Date(start);
+        while (cur <= end) {
+            const day = cur.getDay();
+            // 5 = Friday, 6 = Saturday (Egyptian weekends)
+            if (day !== 5 && day !== 6) {
+                count++;
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+        return count;
+    };
 
     const calendarEvents = useMemo(() => {
         const events = {};
         requests.forEach(req => {
             if (req.status === 'Approved' || req.status === 'Pending') {
-                const interval = eachDayOfInterval({
-                    start: new Date(req.startDate),
-                    end: new Date(req.endDate)
-                });
-                interval.forEach(date => {
-                    const key = format(date, 'yyyy-MM-dd');
-                    events[key] = {
-                        status: req.status,
-                        type: req.leaveTypeName,
-                        code: req.leaveTypeCode // We should ensure backend returns this
-                    };
-                });
+                try {
+                    const interval = eachDayOfInterval({
+                        start: new Date(req.startDate),
+                        end: new Date(req.endDate)
+                    });
+                    interval.forEach(date => {
+                        const key = format(date, 'yyyy-MM-dd');
+                        events[key] = {
+                            status: req.status,
+                            type: req.leaveTypeName,
+                            code: req.leaveTypeCode
+                        };
+                    });
+                } catch (e) {
+                    console.error('Error calculating calendar interval', e);
+                }
             }
         });
         return events;
     }, [requests]);
+
+    const filteredRequests = useMemo(() => {
+        return requests.filter(req => {
+            const matchesStatus = statusFilter === 'All' || req.status === statusFilter;
+            const matchesSearch = !searchTerm ||
+                req.leaveTypeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                req.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesStatus && matchesSearch;
+        });
+    }, [requests, statusFilter, searchTerm]);
+
+    const filteredPending = useMemo(() => {
+        return pendingRequests.filter(req => {
+            const matchesSearch = !searchTerm ||
+                req.employeeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                req.leaveTypeName?.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesSearch;
+        });
+    }, [pendingRequests, searchTerm]);
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -427,8 +490,40 @@ const LeavePage = () => {
                     </CardContent>
                 </Card>
 
+                {/* Filters & Search */}
+                <div className="lg:col-span-3 flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm ring-1 ring-slate-200/50 mb-2">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto no-scrollbar">
+                        {['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'].map(status => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status)}
+                                className={cn(
+                                    "px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap",
+                                    statusFilter === status
+                                        ? "bg-accent text-white shadow-md shadow-accent/20"
+                                        : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                                )}
+                            >
+                                {status}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="relative w-full md:w-80 group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Plus className="w-4 h-4 text-slate-400 rotate-45 group-focus-within:text-accent transition-colors" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search by reason or type..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none"
+                        />
+                    </div>
+                </div>
+
                 {/* Pending Requests for Managers/Admin */}
-                {canApprove && pendingRequests.length > 0 && (
+                {canApprove && filteredPending.length > 0 && (
                     <Card className="border-none shadow-lg shadow-amber-500/5 ring-1 ring-amber-200/50 bg-amber-50/20 overflow-hidden">
                         <CardHeader className="pb-4 bg-amber-50/50 border-b border-amber-100">
                             <CardTitle className="flex items-center gap-2 text-amber-900 font-display">
@@ -444,7 +539,7 @@ const LeavePage = () => {
                         </CardHeader>
                         <CardContent className="p-4 sm:p-6">
                             <div className="space-y-4">
-                                {pendingRequests.map((req) => {
+                                {filteredPending.map((req) => {
                                     const ui = getLeaveTypeUI(req.leaveTypeCode);
                                     const Icon = ui.icon;
                                     return (
@@ -456,8 +551,13 @@ const LeavePage = () => {
                                                 <div className={cn("p-3 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300", ui.bgLight, ui.textColor)}>
                                                     <Icon className="w-5 h-5" />
                                                 </div>
-                                                <div>
-                                                    <p className="text-base font-bold text-slate-900 mb-0.5">{req.employeeName}</p>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between gap-4">
+                                                        <p className="text-base font-bold text-slate-900 mb-0.5">{req.employeeName}</p>
+                                                        <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl text-[10px] font-black border border-emerald-100/50 shadow-sm">
+                                                            BALANCE: {req.remainingBalance}d
+                                                        </div>
+                                                    </div>
                                                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
                                                         <span className={cn("px-2 py-0.5 rounded-full", ui.bgLight, ui.textColor)}>
                                                             {req.leaveTypeName}
@@ -524,7 +624,7 @@ const LeavePage = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {requests.map((req) => {
+                                            {filteredRequests.map((req) => {
                                                 const ui = getLeaveTypeUI(req.leaveTypeCode);
                                                 const Icon = ui.icon;
                                                 return (
@@ -534,9 +634,14 @@ const LeavePage = () => {
                                                                 <div className={cn("p-2 rounded-xl group-hover:scale-110 transition-transform duration-300", ui.bgLight, ui.textColor)}>
                                                                     <Icon className="w-4 h-4" />
                                                                 </div>
-                                                                <span className="text-sm font-bold text-slate-900">
-                                                                    {user?.language === 'ar' ? req.leaveTypeNameAr : req.leaveTypeName}
-                                                                </span>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm font-bold text-slate-900">
+                                                                        {user?.language === 'ar' ? req.leaveTypeNameAr : req.leaveTypeName}
+                                                                    </span>
+                                                                    {req.leaveTypeNameAr && user?.language !== 'ar' && (
+                                                                        <span className="text-[10px] text-slate-400 font-medium">{req.leaveTypeNameAr}</span>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-5">
@@ -564,7 +669,17 @@ const LeavePage = () => {
                                                             <StatusBadge status={req.status} />
                                                         </td>
                                                         <td className="px-6 py-5">
-                                                            {req.approverName ? (
+                                                            {req.status === 'Pending' ? (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="h-8 rounded-lg border-rose-100 text-rose-500 hover:bg-rose-50 hover:border-rose-200 group-hover:scale-105 transition-all font-bold text-[10px]"
+                                                                    onClick={() => handleCancel(req.id)}
+                                                                >
+                                                                    <X className="w-3 h-3 mr-1" />
+                                                                    CANCEL
+                                                                </Button>
+                                                            ) : req.approverName ? (
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 border border-slate-200">
                                                                         {req.approverName.charAt(0)}
@@ -575,7 +690,7 @@ const LeavePage = () => {
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">Waiting</span>
+                                                                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest text-center block">Fixed</span>
                                                             )}
                                                         </td>
                                                     </tr>
@@ -587,7 +702,7 @@ const LeavePage = () => {
 
                                 {/* Mobile List */}
                                 <div className="md:hidden divide-y divide-slate-100">
-                                    {requests.map((req) => {
+                                    {filteredRequests.map((req) => {
                                         const ui = getLeaveTypeUI(req.leaveTypeCode);
                                         const Icon = ui.icon;
                                         return (
@@ -608,6 +723,16 @@ const LeavePage = () => {
                                                     </div>
                                                     <StatusBadge status={req.status} />
                                                 </div>
+                                                {req.status === 'Pending' && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="w-full h-10 rounded-xl text-rose-500 bg-rose-50 border border-rose-100 font-bold text-xs"
+                                                        onClick={() => handleCancel(req.id)}
+                                                    >
+                                                        <X className="w-4 h-4 mr-2" />
+                                                        CANCEL REQUEST
+                                                    </Button>
+                                                )}
                                                 <div className="flex items-center justify-between pt-2 border-t border-slate-50">
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-lg font-black text-slate-900">{req.workingDays}</span>
@@ -690,6 +815,26 @@ const LeavePage = () => {
                             </div>
 
                             <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                                {/* Employee Selector (HR/Admin only) */}
+                                {isAdmin && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Applying for</label>
+                                        <select
+                                            value={form.employeeId}
+                                            onChange={e => setForm(f => ({ ...f, employeeId: e.target.value }))}
+                                            className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none appearance-none cursor-pointer border-r-[16px] border-transparent"
+                                            required={isAdmin}
+                                        >
+                                            <option value="">Select Employee...</option>
+                                            {employees.map(emp => (
+                                                <option key={emp.id} value={emp.id}>
+                                                    {emp.firstName} {emp.lastName} ({emp.departmentName || 'No Dept'})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
                                 {/* Leave Type */}
                                 <div>
                                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Select Type</label>

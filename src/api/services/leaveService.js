@@ -20,6 +20,11 @@ const LeaveService = {
         return response.data;
     },
 
+    cancel: async (id) => {
+        const response = await apiClient.put(`/Leaves/${id}/cancel`);
+        return response.data;
+    },
+
     getHistory: async (employeeId) => {
         const response = await apiClient.get(`/Leaves/employee/${employeeId}`);
         return response.data;
