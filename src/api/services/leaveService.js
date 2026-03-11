@@ -2,14 +2,6 @@ import apiClient from '../apiClient';
 
 const LeaveService = {
     request: async (leaveData) => {
-        // Handle FormData if an attachment is provided
-        if (leaveData instanceof FormData) {
-            const response = await apiClient.post('/Leaves/request', leaveData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            return response.data;
-        }
-
         const response = await apiClient.post('/Leaves/request', leaveData);
         return response.data;
     },

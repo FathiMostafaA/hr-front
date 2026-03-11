@@ -26,6 +26,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import Button from '../../components/ui/Button';
 import LeaveService from '../../api/services/leaveService';
 import EmployeeService from '../../api/services/employeeService';
+import documentService from '../../api/services/documentService';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { cn } from '../../utils/cn';
@@ -272,29 +273,30 @@ const LeavePage = () => {
         setIsSubmitting(true);
         try {
             const finalEmployeeId = isAdmin ? form.employeeId || employeeId : employeeId;
-            let payload;
+            let attachmentUrl = null;
 
             if (form.attachment) {
-                payload = new FormData();
-                payload.append('employeeId', finalEmployeeId);
-                payload.append('leaveTypeId', form.leaveTypeId);
-                payload.append('startDate', form.startDate);
-                payload.append('endDate', effectiveEndDate);
-                payload.append('reason', form.reason || '');
-                payload.append('isHalfDay', form.isHalfDay);
-                if (form.isHalfDay) payload.append('halfDayPeriod', form.halfDayPeriod);
-                payload.append('attachment', form.attachment);
-            } else {
-                payload = {
-                    employeeId: finalEmployeeId,
-                    leaveTypeId: form.leaveTypeId,
-                    startDate: form.startDate,
-                    endDate: effectiveEndDate,
-                    reason: form.reason || '',
-                    isHalfDay: form.isHalfDay,
-                    halfDayPeriod: form.isHalfDay ? form.halfDayPeriod : null
-                };
+                const docRes = await documentService.uploadDocument(
+                    finalEmployeeId, 
+                    form.attachment, 
+                    form.attachment.name, 
+                    'Leave Attachment', 
+                    null, 
+                    false
+                );
+                attachmentUrl = docRes.fileUrl || docRes.FileUrl;
             }
+
+            const payload = {
+                employeeId: finalEmployeeId,
+                leaveTypeId: form.leaveTypeId,
+                startDate: form.startDate,
+                endDate: effectiveEndDate,
+                reason: form.reason || '',
+                isHalfDay: form.isHalfDay,
+                halfDayPeriod: form.isHalfDay ? form.halfDayPeriod : null,
+                attachmentUrl: attachmentUrl
+            };
 
             await LeaveService.request(payload);
             toast.success('Leave request submitted successfully! ✅');

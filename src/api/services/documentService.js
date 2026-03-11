@@ -11,9 +11,10 @@ const documentService = {
         return response.data;
     },
 
-    uploadDocument: async (employeeId, file, documentType, expiryDate, requiresSignature) => {
+    uploadDocument: async (employeeId, file, documentName, documentType, expiryDate, requiresSignature = false) => {
         const formData = new FormData();
         formData.append('employeeId', employeeId);
+        formData.append('documentName', documentName || file.name);
         formData.append('documentType', documentType);
         formData.append('requiresSignature', requiresSignature);
         if (expiryDate) formData.append('expiryDate', expiryDate);
