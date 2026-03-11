@@ -68,6 +68,12 @@ const StatusBadge = ({ status }) => {
 };
 
 const LeavePage = () => {
+    const { user } = useAuth();
+    const currentYear = new Date().getFullYear();
+    const employeeId = user?.employeeId || user?.id;
+    const isAdmin = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
+    const canApprove = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'Manager');
+
     const [requests, setRequests] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
     const [leaveTypes, setLeaveTypes] = useState([]);
@@ -94,14 +100,7 @@ const LeavePage = () => {
         totalDays: 21
     });
     
-    const { user } = useAuth();
-
     const [currentMonth, setCurrentMonth] = useState(new Date());
-
-    const employeeId = user?.employeeId || user?.id;
-    const isAdmin = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
-    const canApprove = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'Manager');
-    const currentYear = new Date().getFullYear();
 
     const [form, setForm] = useState({
         employeeId: '',
