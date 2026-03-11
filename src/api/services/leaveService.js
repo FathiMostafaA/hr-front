@@ -2,6 +2,14 @@ import apiClient from '../apiClient';
 
 const LeaveService = {
     request: async (leaveData) => {
+        // Handle FormData if an attachment is provided
+        if (leaveData instanceof FormData) {
+            const response = await apiClient.post('/Leaves/request', leaveData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return response.data;
+        }
+
         const response = await apiClient.post('/Leaves/request', leaveData);
         return response.data;
     },
@@ -40,6 +48,11 @@ const LeaveService = {
         return response.data;
     },
 
+    getSummaryForEmployee: async (employeeId, year) => {
+        const response = await apiClient.get(`/Leaves/balance/me/${year}`);
+        return response.data;
+    },
+
     getPending: async () => {
         const response = await apiClient.get('/Leaves/pending');
         return response.data;
@@ -57,6 +70,37 @@ const LeaveService = {
 
     getLeaveTypes: async () => {
         const response = await apiClient.get('/Leaves/types');
+        return response.data;
+    },
+
+    // --- New Endpoints for HR/Admin ---
+
+    getAll: async (filterParams) => {
+        const response = await apiClient.get('/Leaves', { params: filterParams });
+        return response.data; // Expected to return a PagedResult
+    },
+
+    hrCancel: async (id, reason) => {
+        const response = await apiClient.put(`/Leaves/${id}/hr-cancel`, JSON.stringify(reason || ''), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return response.data;
+    },
+
+    getLeaveBalanceSummary: async (year) => {
+        const response = await apiClient.get(`/Leaves/balance/summary/${year}`);
+        return response.data;
+    },
+
+    bulkInitializeBalances: async (data) => {
+        // data: { year: int, defaultEntitledDays: int, employeeIds?: [Guid] }
+        const response = await apiClient.post('/Leaves/balance/bulk-initialize', data);
+        return response.data;
+    },
+
+    carryForwardBalances: async (data) => {
+        // data: { fromYear: int, toYear: int, employeeIds?: [Guid] }
+        const response = await apiClient.post('/Leaves/balance/carry-forward', data);
         return response.data;
     },
 };

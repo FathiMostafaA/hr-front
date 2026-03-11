@@ -18,7 +18,9 @@ import {
     UserCheck,
     MessageSquare,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    UploadCloud,
+    FileWarning
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -50,6 +52,7 @@ const StatusBadge = ({ status }) => {
         Approved: { icon: CheckCircle2, variant: 'success', label: 'Approved', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
         Rejected: { icon: XCircle, variant: 'error', label: 'Rejected', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
         Cancelled: { icon: XCircle, variant: 'default', label: 'Cancelled', bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200' },
+        CancelledByHR: { icon: XCircle, variant: 'default', label: 'HR Cancelled', bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' },
     };
     const c = config[status] || config.Pending;
     return (
@@ -76,6 +79,13 @@ const LeavePage = () => {
     const [statusFilter, setStatusFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [employees, setEmployees] = useState([]);
+    
+    // HR Management States
+    const [viewMode, setViewMode] = useState('my_leaves'); // 'my_leaves' | 'organization'
+    const [hrRequests, setHrRequests] = useState([]);
+    const [showBulkInitModal, setShowBulkInitModal] = useState(false);
+    const [showCarryForwardModal, setShowCarryForwardModal] = useState(false);
+    
     const { user } = useAuth();
 
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -85,13 +95,15 @@ const LeavePage = () => {
     const canApprove = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'Manager');
     const currentYear = new Date().getFullYear();
 
-    // Form state
     const [form, setForm] = useState({
         employeeId: '',
         leaveTypeId: '',
         startDate: '',
         endDate: '',
-        reason: ''
+        reason: '',
+        isHalfDay: false,
+        halfDayPeriod: 'Morning',
+        attachment: null
     });
 
     const fetchData = useCallback(async () => {
@@ -104,7 +116,9 @@ const LeavePage = () => {
                 id: t.id || t.Id,
                 name: t.name || t.Name,
                 nameAr: t.nameAr || t.NameAr,
-                code: t.code || t.Code
+                code: t.code || t.Code,
+                requiresDocumentation: t.requiresDocumentation || t.RequiresDocumentation || false,
+                genderRestriction: t.genderRestriction || t.GenderRestriction || null
             }));
             setLeaveTypes(types);
 
@@ -121,7 +135,9 @@ const LeavePage = () => {
                 status: r.status || r.Status,
                 approverName: r.approverName || r.ApproverName,
                 approvalComments: r.approvalComments || r.ApprovalComments,
-                reason: r.reason || r.Reason
+                reason: r.reason || r.Reason,
+                attachmentUrl: r.attachmentUrl || r.AttachmentUrl,
+                isHalfDay: r.isHalfDay || r.IsHalfDay,
             }));
             setRequests(normalizedHistory);
 
@@ -149,10 +165,9 @@ const LeavePage = () => {
             const balanceResults = await Promise.all(balancePromises);
             setBalances(balanceResults);
 
-            // If the user can approve (Manager/HR/Admin), fetch pending requests
+            // Fetch pending requests for Manager/Admin
             if (canApprove) {
                 try {
-                    // HR/Admin see everything, Managers see only their assignments
                     const isHR = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
                     const rawPending = isHR
                         ? await LeaveService.getPending()
@@ -176,7 +191,33 @@ const LeavePage = () => {
                 }
             }
 
-            // If HR/Admin, fetch all employees for "Apply for Others"
+            // Fetch Organization leaves if Admin
+            if (isAdmin && viewMode === 'organization') {
+               try {
+                   const orgLeavesResponse = await LeaveService.getAll({ page: 1, pageSize: 200 });
+                   // map it
+                   const normalizedOrgHistory = (orgLeavesResponse?.items || []).map(r => ({
+                        id: r.id || r.Id,
+                        employeeName: r.employeeName || r.EmployeeName,
+                        leaveTypeName: r.leaveTypeName || r.LeaveTypeName,
+                        leaveTypeCode: r.leaveTypeCode || r.LeaveTypeCode,
+                        startDate: r.startDate || r.StartDate,
+                        endDate: r.endDate || r.EndDate,
+                        workingDays: r.workingDays || r.WorkingDays,
+                        status: r.status || r.Status,
+                        approverName: r.approverName || r.ApproverName,
+                        approvalComments: r.approvalComments || r.ApprovalComments,
+                        reason: r.reason || r.Reason,
+                        attachmentUrl: r.attachmentUrl || r.AttachmentUrl,
+                        isHalfDay: r.isHalfDay || r.IsHalfDay,
+                    }));
+                    setHrRequests(normalizedOrgHistory);
+               } catch(err) {
+                   console.error('Failed to fetch org leaves', err);
+               }
+            }
+
+            // Fetch all employees for HR actions
             if (isAdmin) {
                 try {
                     const allEmployees = await EmployeeService.getAll();
@@ -209,27 +250,56 @@ const LeavePage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!form.startDate || !form.endDate) {
+        
+        const selectedType = leaveTypes.find(t => t.id === form.leaveTypeId);
+        
+        if (!form.startDate || (!form.endDate && !form.isHalfDay)) {
             toast.error('Please select start and end dates');
             return;
         }
-        if (new Date(form.endDate) < new Date(form.startDate)) {
+
+        const effectiveEndDate = form.isHalfDay ? form.startDate : form.endDate;
+        if (new Date(effectiveEndDate) < new Date(form.startDate)) {
             toast.error('End date must be after start date');
+            return;
+        }
+
+        if (selectedType?.requiresDocumentation && !form.attachment) {
+            toast.error('This leave type requires supporting documentation.');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            await LeaveService.request({
-                employeeId: isAdmin ? form.employeeId || employeeId : employeeId,
-                leaveTypeId: form.leaveTypeId,
-                startDate: form.startDate,
-                endDate: form.endDate,
-                reason: form.reason
-            });
+            const finalEmployeeId = isAdmin ? form.employeeId || employeeId : employeeId;
+            let payload;
+
+            if (form.attachment) {
+                payload = new FormData();
+                payload.append('employeeId', finalEmployeeId);
+                payload.append('leaveTypeId', form.leaveTypeId);
+                payload.append('startDate', form.startDate);
+                payload.append('endDate', effectiveEndDate);
+                payload.append('reason', form.reason || '');
+                payload.append('isHalfDay', form.isHalfDay);
+                if (form.isHalfDay) payload.append('halfDayPeriod', form.halfDayPeriod);
+                payload.append('attachment', form.attachment);
+            } else {
+                payload = {
+                    employeeId: finalEmployeeId,
+                    leaveTypeId: form.leaveTypeId,
+                    startDate: form.startDate,
+                    endDate: effectiveEndDate,
+                    reason: form.reason || '',
+                    isHalfDay: form.isHalfDay,
+                    halfDayPeriod: form.isHalfDay ? form.halfDayPeriod : null
+                };
+            }
+
+            await LeaveService.request(payload);
             toast.success('Leave request submitted successfully! ✅');
             setShowModal(false);
-            setForm(f => ({ ...f, startDate: '', endDate: '', reason: '', employeeId: '' }));
+            setForm(f => ({ ...f, startDate: '', endDate: '', reason: '', employeeId: '', isHalfDay: false, attachment: null }));
             fetchData();
         } catch (err) {
             const msg = err.response?.data;
@@ -278,13 +348,70 @@ const LeavePage = () => {
             toast.success('Leave request cancelled successfully');
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data || 'Failed to cancel leave request');
+            toast.error(err.response?.data?.message || err.response?.data || 'Failed to cancel leave request');
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    const handleHRCancel = async (id) => {
+        const reason = window.prompt("Enter reason for cancelling this leave on behalf of the employee:");
+        if (reason === null) return;
+
+        setIsSubmitting(true);
+        try {
+            await LeaveService.hrCancel(id, { reason });
+            toast.success('Leave cancelled by HR successfully');
+            fetchData();
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.response?.data || 'Failed to cancel leave by HR');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleBulkInit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = {
+            year: parseInt(formData.get('year')),
+            defaultEntitledDays: parseInt(formData.get('defaultDays'))
+        };
+        setIsSubmitting(true);
+        try {
+            await LeaveService.bulkInitializeBalances(data);
+            toast.success(`Bulk initialization for year ${data.year} completed.`);
+            setShowBulkInitModal(false);
+            fetchData();
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.response?.data || 'Failed bulk init');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCarryForward = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = {
+            fromYear: parseInt(formData.get('fromYear')),
+            toYear: parseInt(formData.get('toYear'))
+        };
+        setIsSubmitting(true);
+        try {
+            await LeaveService.carryForwardBalances(data);
+            toast.success(`Carried forward balances to ${data.toYear} successfully.`);
+            setShowCarryForwardModal(false);
+            fetchData();
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.response?.data || 'Carry forward failed');
+        } finally {
+             setIsSubmitting(false);
+        }
+    };
+
     const calculateDays = () => {
+        if (form.isHalfDay) return 0.5;
         if (!form.startDate || !form.endDate) return 0;
         const start = new Date(form.startDate);
         const end = new Date(form.endDate);
@@ -329,14 +456,16 @@ const LeavePage = () => {
     }, [requests]);
 
     const filteredRequests = useMemo(() => {
-        return requests.filter(req => {
+        const sourceData = viewMode === 'organization' ? hrRequests : requests;
+        return sourceData.filter(req => {
             const matchesStatus = statusFilter === 'All' || req.status === statusFilter;
             const matchesSearch = !searchTerm ||
                 req.leaveTypeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                req.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+                (req.reason && req.reason.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (req.employeeName && req.employeeName.toLowerCase().includes(searchTerm.toLowerCase()));
             return matchesStatus && matchesSearch;
         });
-    }, [requests, statusFilter, searchTerm]);
+    }, [requests, hrRequests, viewMode, statusFilter, searchTerm]);
 
     const filteredPending = useMemo(() => {
         return pendingRequests.filter(req => {
@@ -595,13 +724,28 @@ const LeavePage = () => {
                     </Card>
                 )}
 
-                {/* My Requests Table */}
+                {/* Requests Table */}
                 <Card className="border-none shadow-sm ring-1 ring-slate-200/50 overflow-hidden bg-white">
                     <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50 border-b border-slate-100">
                         <div>
-                            <CardTitle className="font-display">My Leave Requests</CardTitle>
-                            <CardDescription>Your leave request history and current applications</CardDescription>
+                            <CardTitle className="font-display">
+                                {isAdmin ? (
+                                    <div className="flex gap-4 items-center mb-1">
+                                        <button onClick={() => setViewMode('my_leaves')} className={cn("text-xl transition-colors", viewMode === 'my_leaves' ? "text-slate-900 font-bold" : "text-slate-400 font-medium hover:text-slate-600")}>My Leaves</button>
+                                        <button onClick={() => setViewMode('organization')} className={cn("text-xl transition-colors", viewMode === 'organization' ? "text-slate-900 font-bold" : "text-slate-400 font-medium hover:text-slate-600")}>Organization</button>
+                                    </div>
+                                ) : "My Leave Requests"}
+                            </CardTitle>
+                            <CardDescription>
+                                {viewMode === 'my_leaves' ? "Your leave request history and current applications" : "View and manage all organization requests"}
+                            </CardDescription>
                         </div>
+                        {isAdmin && viewMode === 'organization' && (
+                            <div className="flex flex-wrap gap-2">
+                                <Button variant="outline" size="sm" className="hidden sm:flex text-xs font-bold" onClick={() => setShowCarryForwardModal(true)}>Carry Forward</Button>
+                                <Button variant="accent" size="sm" className="text-xs font-bold" onClick={() => setShowBulkInitModal(true)}>Bulk Init Balances</Button>
+                            </div>
+                        )}
                     </CardHeader>
                     <CardContent className="p-0">
                         {isLoading ? (
@@ -661,9 +805,20 @@ const LeavePage = () => {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-5">
-                                                            <p className="text-sm text-slate-500 max-w-[180px] truncate group-hover:text-slate-700 transition-colors">
+                                                            <p className="text-sm text-slate-500 max-w-[180px] break-words">
                                                                 {req.reason || <span className="text-slate-300 italic opacity-50 text-xs">No reason provided</span>}
                                                             </p>
+                                                            {req.attachmentUrl && (
+                                                                <a
+                                                                    href={req.attachmentUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="mt-2 text-[10px] font-bold text-accent bg-accent/10 px-2 py-1 rounded w-max flex items-center gap-1 hover:bg-accent hover:text-white transition-all"
+                                                                >
+                                                                    <FileWarning className="w-3 h-3" />
+                                                                    Review Doc
+                                                                </a>
+                                                            )}
                                                         </td>
                                                         <td className="px-6 py-5 text-center">
                                                             <StatusBadge status={req.status} />
@@ -674,10 +829,19 @@ const LeavePage = () => {
                                                                     variant="outline"
                                                                     size="sm"
                                                                     className="h-8 rounded-lg border-rose-100 text-rose-500 hover:bg-rose-50 hover:border-rose-200 group-hover:scale-105 transition-all font-bold text-[10px]"
-                                                                    onClick={() => handleCancel(req.id)}
+                                                                    onClick={() => viewMode === 'organization' ? handleHRCancel(req.id) : handleCancel(req.id)}
                                                                 >
                                                                     <X className="w-3 h-3 mr-1" />
                                                                     CANCEL
+                                                                </Button>
+                                                            ) : req.status === 'Approved' && viewMode === 'organization' ? (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-8 rounded-lg text-rose-500 hover:bg-rose-50 group-hover:scale-105 transition-all font-bold text-[10px]"
+                                                                    onClick={() => handleHRCancel(req.id)}
+                                                                >
+                                                                    HR CANCEL
                                                                 </Button>
                                                             ) : req.approverName ? (
                                                                 <div className="flex items-center gap-2">
@@ -723,14 +887,19 @@ const LeavePage = () => {
                                                     </div>
                                                     <StatusBadge status={req.status} />
                                                 </div>
-                                                {req.status === 'Pending' && (
+                                                {viewMode === 'organization' && (
+                                                    <div className="text-xs font-bold text-slate-700 bg-slate-50 p-2 rounded block w-full mt-2">
+                                                        Employee: {req.employeeName}
+                                                    </div>
+                                                )}
+                                                {(req.status === 'Pending' || (req.status === 'Approved' && viewMode === 'organization')) && (
                                                     <Button
                                                         variant="ghost"
                                                         className="w-full h-10 rounded-xl text-rose-500 bg-rose-50 border border-rose-100 font-bold text-xs"
-                                                        onClick={() => handleCancel(req.id)}
+                                                        onClick={() => viewMode === 'organization' ? handleHRCancel(req.id) : handleCancel(req.id)}
                                                     >
                                                         <X className="w-4 h-4 mr-2" />
-                                                        CANCEL REQUEST
+                                                        {viewMode === 'organization' ? 'HR CANCEL' : 'CANCEL REQUEST'}
                                                     </Button>
                                                 )}
                                                 <div className="flex items-center justify-between pt-2 border-t border-slate-50">
@@ -867,6 +1036,18 @@ const LeavePage = () => {
                                     </div>
                                 </div>
 
+                                {/* Half Day Toggle */}
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="isHalfDay"
+                                        checked={form.isHalfDay}
+                                        onChange={e => setForm(f => ({ ...f, isHalfDay: e.target.checked }))}
+                                        className="w-4 h-4 rounded text-accent focus:ring-accent border-slate-300"
+                                    />
+                                    <label htmlFor="isHalfDay" className="text-sm font-bold text-slate-700">This is a half-day leave</label>
+                                </div>
+
                                 {/* Dates */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -882,20 +1063,34 @@ const LeavePage = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">End Date</label>
-                                        <div className="relative group">
-                                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
-                                            <input
-                                                type="date"
-                                                value={form.endDate}
-                                                onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                                                min={form.startDate}
-                                                className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none"
-                                                required
-                                            />
+                                    {form.isHalfDay ? (
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Period</label>
+                                            <select
+                                                value={form.halfDayPeriod}
+                                                onChange={e => setForm(f => ({ ...f, halfDayPeriod: e.target.value }))}
+                                                className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none appearance-none border-r-[16px] border-transparent"
+                                            >
+                                                <option value="Morning">Morning</option>
+                                                <option value="Afternoon">Afternoon</option>
+                                            </select>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">End Date</label>
+                                            <div className="relative group">
+                                                <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
+                                                <input
+                                                    type="date"
+                                                    value={form.endDate}
+                                                    onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                                                    min={form.startDate}
+                                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Days Preview */}
@@ -915,7 +1110,25 @@ const LeavePage = () => {
                                         </span>
                                     </div>
                                 )}
-
+                                {/* Documentation */}
+                                {leaveTypes.find(t => t.id === form.leaveTypeId)?.requiresDocumentation && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <label className="flex items-center gap-2 text-xs font-black text-rose-500 uppercase tracking-widest">
+                                            <FileWarning className="w-4 h-4" />
+                                            Supporting Document Required
+                                        </label>
+                                        <div className="relative group">
+                                            <UploadCloud className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                                onChange={e => setForm(f => ({ ...f, attachment: e.target.files[0] }))}
+                                                className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-dashed border-rose-200 rounded-2xl text-sm font-medium focus:border-accent hover:border-accent transition-all outline-none file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-white file:text-slate-700 hover:file:bg-slate-100 cursor-pointer"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                                 {/* Reason */}
                                 <div className="space-y-2">
                                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Reason / Note</label>
@@ -1063,6 +1276,73 @@ const LeavePage = () => {
                                     </Button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+                {/* Bulk Init Modal */}
+                {showBulkInitModal && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300" onClick={() => setShowBulkInitModal(false)}>
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/20 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500" onClick={e => e.stopPropagation()}>
+                            <div className="p-8 border-b border-slate-100 bg-slate-50/50 relative">
+                                <div className="absolute top-8 right-8">
+                                    <button onClick={() => setShowBulkInitModal(false)} className="p-2 rounded-xl hover:bg-slate-200/50 transition-colors text-slate-400 hover:text-slate-900">
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <h2 className="text-xl font-black text-slate-900 font-display tracking-tight">Bulk Initialize Balances</h2>
+                                <p className="text-slate-500 text-sm mt-1 font-medium">Reset initial annual leave balances based on employment law</p>
+                            </div>
+                            <form onSubmit={handleBulkInit} className="p-8 space-y-6">
+                                <div className="space-y-4">
+                                     <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Target Year</label>
+                                        <input type="number" name="year" defaultValue={currentYear} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none" required />
+                                     </div>
+                                     <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Default Base Days</label>
+                                        <input type="number" name="defaultDays" defaultValue="21" className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none" required />
+                                     </div>
+                                </div>
+                                <div className="flex items-center gap-4 pt-2">
+                                     <Button type="button" variant="outline" className="flex-1 rounded-2xl py-7 text-sm font-bold border-slate-200 text-slate-500 hover:bg-slate-50" onClick={() => setShowBulkInitModal(false)}>Cancel</Button>
+                                     <Button type="submit" variant="accent" className="flex-1 rounded-2xl py-7 text-sm font-black shadow-lg shadow-accent/20 hover:shadow-xl transition-all" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="w-5 h-5 animate-spin"/> : 'INITIALIZE'}</Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Carry Forward Modal */}
+                {showCarryForwardModal && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300" onClick={() => setShowCarryForwardModal(false)}>
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/20 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500" onClick={e => e.stopPropagation()}>
+                            <div className="p-8 border-b border-slate-100 bg-slate-50/50 relative">
+                                <div className="absolute top-8 right-8">
+                                    <button onClick={() => setShowCarryForwardModal(false)} className="p-2 rounded-xl hover:bg-slate-200/50 transition-colors text-slate-400 hover:text-slate-900">
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <h2 className="text-xl font-black text-slate-900 font-display tracking-tight">Carry Forward</h2>
+                                <p className="text-slate-500 text-sm mt-1 font-medium">Transfer remaining balances to the next year</p>
+                            </div>
+                            <form onSubmit={handleCarryForward} className="p-8 space-y-6">
+                                <div className="space-y-4">
+                                     <div className="grid grid-cols-2 gap-4">
+                                         <div className="space-y-2">
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">From Year</label>
+                                            <input type="number" name="fromYear" defaultValue={currentYear - 1} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none" required />
+                                         </div>
+                                         <div className="space-y-2">
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">To Year</label>
+                                            <input type="number" name="toYear" defaultValue={currentYear} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none" required />
+                                         </div>
+                                     </div>
+                                </div>
+                                <div className="flex items-center gap-4 pt-2">
+                                     <Button type="button" variant="outline" className="flex-1 rounded-2xl py-7 text-sm font-bold border-slate-200 text-slate-500 hover:bg-slate-50" onClick={() => setShowCarryForwardModal(false)}>Cancel</Button>
+                                     <Button type="submit" variant="accent" className="flex-1 rounded-2xl py-7 text-sm font-black shadow-lg shadow-accent/20 hover:shadow-xl transition-all" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="w-5 h-5 animate-spin"/> : 'EXECUTE'}</Button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}
