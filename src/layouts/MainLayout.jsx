@@ -22,7 +22,8 @@ import {
     GraduationCap,
     ShieldAlert,
     History,
-    BarChart3
+    BarChart3,
+    Calendar
 } from 'lucide-react';
 import { useNotification, NotificationProvider } from '../context/NotificationContext';
 import { PresenceProvider } from '../context/PresenceContext';
@@ -89,6 +90,7 @@ const MainLayoutContent = () => {
         { icon: Newspaper, label: 'Company Feed', href: '/feed', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
         { icon: Users, label: 'User Accounts', href: '/users', roles: ['Admin'] },
         { icon: BarChart3, label: 'Reports', href: '/reports', roles: ['Admin', 'HRManager', 'HR'] },
+        { icon: Calendar, label: 'Holidays', href: '/holidays', roles: ['Admin', 'HRManager', 'HR'] },
         { icon: History, label: 'Audit Logs', href: '/audit', roles: ['Admin'] },
         { icon: Settings, label: 'Settings', href: '/settings', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
     ], [userRoles]);

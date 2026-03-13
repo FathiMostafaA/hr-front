@@ -26,6 +26,7 @@ import AuditLogsPage from './pages/admin/AuditLogsPage';
 import ReportsPage from './pages/reports/ReportsPage';
 import CareersPage from './pages/careers/CareersPage';
 import AccessDeniedPage from './pages/errors/AccessDeniedPage';
+import HolidaysPage from './pages/admin/HolidaysPage';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -156,6 +157,12 @@ function App() {
           <Route path="reports" element={
             <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <ReportsPage />
+            </RoleProtectedRoute>
+          } />
+
+          <Route path="holidays" element={
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
+              <HolidaysPage />
             </RoleProtectedRoute>
           } />
         </Route>
