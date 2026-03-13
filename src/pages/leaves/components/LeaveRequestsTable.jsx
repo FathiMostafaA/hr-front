@@ -11,7 +11,8 @@ const LeaveRequestsTable = ({
     viewMode, 
     onCancel, 
     onHRCancel, 
-    onShowModal 
+    onShowModal,
+    showEmployeeColumn = false
 }) => {
     if (filteredRequests.length === 0) {
         return (
@@ -19,11 +20,11 @@ const LeaveRequestsTable = ({
                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-slate-200">
                     <AlertCircle className="w-8 h-8 text-slate-300" />
                 </div>
-                <h3 className="text-base font-bold text-slate-600">No leave requests yet</h3>
-                <p className="text-sm text-slate-400 mt-1 mb-6">Your history will appear here once you apply.</p>
+                <h3 className="text-base font-bold text-slate-600">لا توجد طلبات إجازة</h3>
+                <p className="text-sm text-slate-400 mt-1 mb-6">{showEmployeeColumn ? 'ستظهر طلبات المنظمة هنا.' : 'ستظهر طلباتك هنا بعد التقديم.'}</p>
                 <Button variant="accent" size="sm" className="rounded-xl px-6" onClick={onShowModal}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Launch First Request
+                    {showEmployeeColumn ? 'إضافة إجازة لموظف' : 'تقديم أول طلب'}
                 </Button>
             </div>
         );
@@ -36,12 +37,13 @@ const LeaveRequestsTable = ({
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/30">
-                            <th className="px-6 py-4 border-b border-slate-100">Type</th>
-                            <th className="px-6 py-4 border-b border-slate-100">Duration</th>
-                            <th className="px-6 py-4 border-b border-slate-100">Days</th>
-                            <th className="px-6 py-4 border-b border-slate-100">Reason</th>
-                            <th className="px-6 py-4 border-b border-slate-100 text-center">Status</th>
-                            <th className="px-6 py-4 border-b border-slate-100">Details</th>
+                            {showEmployeeColumn && <th className="px-6 py-4 border-b border-slate-100">الموظف</th>}
+                            <th className="px-6 py-4 border-b border-slate-100">النوع</th>
+                            <th className="px-6 py-4 border-b border-slate-100">المدة</th>
+                            <th className="px-6 py-4 border-b border-slate-100">الأيام</th>
+                            <th className="px-6 py-4 border-b border-slate-100">السبب</th>
+                            <th className="px-6 py-4 border-b border-slate-100 text-center">الحالة</th>
+                            <th className="px-6 py-4 border-b border-slate-100">تفاصيل</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -50,6 +52,11 @@ const LeaveRequestsTable = ({
                             const Icon = ui.icon;
                             return (
                                 <tr key={req.id} className="group hover:bg-slate-50/80 transition-all duration-200">
+                                    {showEmployeeColumn && (
+                                        <td className="px-6 py-5">
+                                            <span className="text-sm font-semibold text-slate-800">{req.employeeName || '—'}</span>
+                                        </td>
+                                    )}
                                     <td className="px-6 py-5">
                                         <div className="flex items-center gap-3">
                                             <div className={cn("p-2 rounded-xl group-hover:scale-110 transition-transform duration-300", ui.bgLight, ui.textColor)}>

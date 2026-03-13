@@ -14,45 +14,74 @@ const ApplyLeaveModal = ({
     onSubmit, 
     isSubmitting, 
     userLanguage,
-    calculateDays 
+    calculateDays,
+    balanceSummaryAll = [],
+    currentYear,
+    currentEmployeeId
 }) => {
+    const selectedEmployeeSummary = isAdmin && form.employeeId && balanceSummaryAll.find(s => 
+        (s.employeeId || s.EmployeeId) === form.employeeId
+    );
+    const selectedBalances = selectedEmployeeSummary?.balances || selectedEmployeeSummary?.Balances || [];
+
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300" onClick={onClose}>
-            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="relative p-8 border-b border-slate-100 bg-slate-50/50">
                     <div className="absolute top-8 right-8">
-                        <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-200/50 transition-colors text-slate-400 hover:text-slate-900">
+                        <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-slate-200/50 transition-colors text-slate-400 hover:text-slate-900">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
-                    <h2 className="text-2xl font-black text-slate-900 font-display tracking-tight">Apply for Leave</h2>
-                    <p className="text-slate-500 mt-1 font-medium">Plan your time off with ease</p>
+                    <h2 className="text-2xl font-black text-slate-900 font-display tracking-tight">
+                        {isAdmin ? 'إضافة إجازة لموظف' : 'طلب إجازة'}
+                    </h2>
+                    <p className="text-slate-500 mt-1 font-medium">
+                        {isAdmin ? 'اختر الموظف ثم نوع الإجازة والتواريخ. كل موظف له أرصدته الخاصة.' : 'اختر النوع والتواريخ.'}
+                    </p>
                 </div>
 
                 <form onSubmit={onSubmit} className="p-8 space-y-6">
-                    {/* Employee Selector (HR/Admin only) */}
+                    {/* Employee Selector (HR/Admin only) - required so admin can add leave for any employee */}
                     {isAdmin && (
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Applying for</label>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">الموظف *</label>
                             <select
                                 value={form.employeeId}
                                 onChange={e => setForm(f => ({ ...f, employeeId: e.target.value }))}
                                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none appearance-none cursor-pointer border-r-[16px] border-transparent"
-                                required={isAdmin}
+                                required
                             >
-                                <option value="">Select Employee...</option>
+                                <option value="">اختر الموظف...</option>
                                 {employees.map(emp => (
                                     <option key={emp.id} value={emp.id}>
-                                        {emp.firstName} {emp.lastName} ({emp.departmentName || 'No Dept'})
+                                        {emp.firstName} {emp.lastName} — {emp.departmentName || 'بدون قسم'}
                                     </option>
                                 ))}
                             </select>
+                            {selectedBalances.length > 0 && (
+                                <div className="mt-3 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">رصيد الموظف الحالي ({currentYear})</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedBalances.map((b, i) => {
+                                            const remaining = b.remainingDays ?? b.RemainingDays ?? 0;
+                                            const total = b.totalEntitledDays ?? b.TotalEntitledDays ?? 0;
+                                            const name = b.leaveTypeName || b.LeaveTypeName || leaveTypes.find(t => t.id === b.leaveTypeId)?.name || '—';
+                                            return (
+                                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700">
+                                                    {name}: {remaining}/{total}
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {/* Leave Type */}
                     <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Select Type</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">نوع الإجازة</label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {leaveTypes.map(type => {
                                 const ui = getLeaveTypeUI(type.code);
@@ -91,13 +120,13 @@ const ApplyLeaveModal = ({
                             onChange={e => setForm(f => ({ ...f, isHalfDay: e.target.checked }))}
                             className="w-4 h-4 rounded text-accent focus:ring-accent border-slate-300"
                         />
-                        <label htmlFor="isHalfDay" className="text-sm font-bold text-slate-700">This is a half-day leave</label>
+                        <label htmlFor="isHalfDay" className="text-sm font-bold text-slate-700">نصف يوم فقط</label>
                     </div>
 
                     {/* Dates */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Start Date</label>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">من تاريخ</label>
                             <div className="relative group">
                                 <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
                                 <input
@@ -111,7 +140,7 @@ const ApplyLeaveModal = ({
                         </div>
                         {form.isHalfDay ? (
                             <div className="space-y-2">
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Period</label>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">الفترة</label>
                                 <select
                                     value={form.halfDayPeriod}
                                     onChange={e => setForm(f => ({ ...f, halfDayPeriod: e.target.value }))}
@@ -123,7 +152,7 @@ const ApplyLeaveModal = ({
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">End Date</label>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">إلى تاريخ</label>
                                 <div className="relative group">
                                     <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
                                     <input
@@ -147,8 +176,8 @@ const ApplyLeaveModal = ({
                                     <CalendarCheck className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <span className="text-sm font-black text-accent block">Estimated Duration</span>
-                                    <span className="text-xs text-accent/70 font-bold uppercase tracking-tighter">Working days will be calculated</span>
+                                    <span className="text-sm font-black text-accent block">المدة التقريبية</span>
+                                    <span className="text-xs text-accent/70 font-bold uppercase tracking-tighter">أيام العمل المحسوبة</span>
                                 </div>
                             </div>
                             <span className="text-3xl font-black text-accent tracking-tighter">
@@ -161,7 +190,7 @@ const ApplyLeaveModal = ({
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
                             <label className="flex items-center gap-2 text-xs font-black text-rose-500 uppercase tracking-widest">
                                 <FileWarning className="w-4 h-4" />
-                                Supporting Document Required
+                                مرفق مطلوب
                             </label>
                             <div className="relative group">
                                 <UploadCloud className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
@@ -177,12 +206,12 @@ const ApplyLeaveModal = ({
                     )}
                     {/* Reason */}
                     <div className="space-y-2">
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Reason / Note</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">السبب / ملاحظة</label>
                         <textarea
                             rows={3}
                             value={form.reason}
                             onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
-                            placeholder="Add any additional context for your request..."
+                            placeholder="أي تفاصيل إضافية للطلب..."
                             className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-medium text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none resize-none"
                         />
                     </div>
@@ -195,7 +224,7 @@ const ApplyLeaveModal = ({
                             className="flex-1 rounded-2xl py-7 text-sm font-bold border-slate-200 text-slate-500 hover:bg-slate-50"
                             onClick={onClose}
                         >
-                            Cancel
+                            إلغاء
                         </Button>
                         <Button
                             type="submit"
@@ -208,7 +237,7 @@ const ApplyLeaveModal = ({
                             ) : (
                                 <>
                                     <Send className="w-4 h-4 mr-2" />
-                                    SUBMIT REQUEST
+                                    إرسال الطلب
                                 </>
                             )}
                         </Button>

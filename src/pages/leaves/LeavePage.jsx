@@ -30,7 +30,7 @@ const LeavePage = () => {
     const canApprove = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'Manager');
     const hasEmployeeContext = !!user?.employeeId;
 
-    const [viewMode, setViewMode] = useState('my_leaves'); // 'my_leaves' | 'organization'
+    const [viewMode, setViewMode] = useState(() => (isAdmin && !hasEmployeeContext ? 'organization' : 'my_leaves'));
     const [statusFilter, setStatusFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -44,6 +44,7 @@ const LeavePage = () => {
         employees,
         hrRequests,
         calendarEvents,
+        balanceSummaryAll,
         fetchData
     } = useLeaveData(user, isAdmin, canApprove, viewMode, currentYear);
 
@@ -94,6 +95,12 @@ const LeavePage = () => {
         }
     }, [leaveTypes, form.leaveTypeId]);
 
+    useEffect(() => {
+        if (isAdmin && !hasEmployeeContext && viewMode === 'my_leaves') {
+            setViewMode('organization');
+        }
+    }, [isAdmin, hasEmployeeContext, viewMode]);
+
     const calculateDays = () => {
         if (form.isHalfDay) return 0.5;
         if (!form.startDate || !form.endDate) return 0;
@@ -138,10 +145,10 @@ const LeavePage = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-8">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 font-display">
-                        Leave Management
+                        الإجازات
                     </h1>
                     <p className="text-slate-500 mt-2 text-lg max-w-2xl">
-                        Request and track your leave applications with dynamic policies and real-time balances.
+                        {isAdmin ? 'إدارة طلبات الإجازات وإضافة إجازات للموظفين وتوزيع الأرصدة حسب كل موظف.' : 'قدّم طلب إجازة وتابع حالة طلباتك ورصيدك.'}
                     </p>
                 </div>
                 <Button
@@ -150,10 +157,10 @@ const LeavePage = () => {
                     className="shadow-lg shadow-accent/20 hover:shadow-xl hover:translate-y-[-2px] transition-all duration-300 rounded-xl px-8"
                     onClick={() => setShowModal(true)}
                     disabled={!hasEmployeeContext && !isAdmin}
-                    title={!hasEmployeeContext && !isAdmin ? 'Link an employee to your account to apply for leave' : ''}
+                    title={!hasEmployeeContext && !isAdmin ? 'اربط حسابك بموظف أو اختر موظفاً من القائمة' : ''}
                 >
                     <Plus className="w-5 h-5 mr-2" />
-                    Apply for Leave
+                    {isAdmin && viewMode === 'organization' ? 'إضافة إجازة لموظف' : 'طلب إجازة'}
                 </Button>
             </div>
 
@@ -178,10 +185,11 @@ const LeavePage = () => {
                     calendarEvents={calendarEvents} 
                 />
 
-                {/* Filters & Search */}
-                <div className="lg:col-span-3 flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm ring-1 ring-slate-200/50 mb-2">
+                {/* Filters & Search - full width */}
+                <div className="lg:col-span-3 flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm ring-1 ring-slate-200/50">
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto no-scrollbar">
-                        {['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'].map(status => (
+                        {['الكل', 'قيد الموافقة', 'موافق عليه', 'مرفوض', 'ملغي'].map((label, i) => {
+                            const status = ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'][i];
                             <button
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
@@ -192,9 +200,9 @@ const LeavePage = () => {
                                         : "bg-slate-50 text-slate-500 hover:bg-slate-100"
                                 )}
                             >
-                                {status}
+                                {label}
                             </button>
-                        ))}
+                        })}
                     </div>
                     <div className="relative w-full md:w-80 group">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -202,7 +210,7 @@ const LeavePage = () => {
                         </div>
                         <input
                             type="text"
-                            placeholder="Search by reason or type..."
+                            placeholder="بحث بالسبب أو النوع أو الموظف..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-xs font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none"
@@ -223,23 +231,23 @@ const LeavePage = () => {
                             <CardTitle className="font-display">
                                 {isAdmin ? (
                                     <div className="flex gap-4 items-center mb-1">
-                                        <button onClick={() => setViewMode('my_leaves')} className={cn("text-xl transition-colors", viewMode === 'my_leaves' ? "text-slate-900 font-bold" : "text-slate-400 font-medium hover:text-slate-600")}>My Leaves</button>
-                                        <button onClick={() => setViewMode('organization')} className={cn("text-xl transition-colors", viewMode === 'organization' ? "text-slate-900 font-bold" : "text-slate-400 font-medium hover:text-slate-600")}>Organization</button>
+                                        <button type="button" onClick={() => setViewMode('my_leaves')} className={cn("text-xl transition-colors", viewMode === 'my_leaves' ? "text-slate-900 font-bold" : "text-slate-400 font-medium hover:text-slate-600")}>إجازاتي</button>
+                                        <button type="button" onClick={() => setViewMode('organization')} className={cn("text-xl transition-colors", viewMode === 'organization' ? "text-slate-900 font-bold" : "text-slate-400 font-medium hover:text-slate-600")}>المنظمة</button>
                                     </div>
-                                ) : "My Leave Requests"}
+                                ) : "طلبات إجازاتي"}
                             </CardTitle>
                             <CardDescription>
-                                {viewMode === 'my_leaves' ? "Your leave request history and current applications" : "View and manage all organization requests"}
+                                {viewMode === 'my_leaves' ? "سجل طلباتك وطلباتك الحالية" : "عرض وإدارة كل طلبات الإجازات في المنظمة"}
                             </CardDescription>
                         </div>
                         {isAdmin && viewMode === 'organization' && (
                             <div className="flex flex-wrap gap-2">
-                                <Button variant="outline" size="sm" className="hidden sm:flex text-xs font-bold" onClick={() => setShowCarryForwardModal(true)}>Carry Forward</Button>
+                                <Button variant="outline" size="sm" className="hidden sm:flex text-xs font-bold" onClick={() => setShowCarryForwardModal(true)}>ترحيل الرصيد</Button>
                                 <Button variant="outline" size="sm" className="text-xs font-bold" onClick={() => {
                                     setManualForm(f => ({ ...f, year: currentYear }));
                                     setShowManualModal(true);
-                                }}>Manual Init</Button>
-                                <Button variant="accent" size="sm" className="text-xs font-bold" onClick={() => setShowBulkInitModal(true)}>Bulk Init Balances</Button>
+                                }}>رصيد لموظف</Button>
+                                <Button variant="accent" size="sm" className="text-xs font-bold" onClick={() => setShowBulkInitModal(true)}>تهيئة أرصدة الجميع</Button>
                             </div>
                         )}
                     </CardHeader>
@@ -256,6 +264,7 @@ const LeavePage = () => {
                                 onCancel={handleCancel}
                                 onHRCancel={handleHRCancel}
                                 onShowModal={() => setShowModal(true)}
+                                showEmployeeColumn={isAdmin && viewMode === 'organization'}
                             />
                         )}
                     </CardContent>
@@ -277,6 +286,9 @@ const LeavePage = () => {
                         isSubmitting={isSubmitting}
                         userLanguage={user?.language}
                         calculateDays={calculateDays}
+                        balanceSummaryAll={balanceSummaryAll}
+                        currentYear={currentYear}
+                        currentEmployeeId={employeeId}
                     />
                 )}
 

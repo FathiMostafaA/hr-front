@@ -15,12 +15,12 @@ const PendingApprovals = ({ filteredPending, onReview }) => {
                     <div className="p-2 rounded-lg bg-amber-500 text-white shadow-md">
                         <Clock className="w-5 h-5 animate-pulse" />
                     </div>
-                    Pending Approvals
+                    طلبات بانتظار الموافقة
                     <span className="bg-amber-200 text-amber-800 px-2.5 py-0.5 rounded-full text-xs font-bold border-none ml-2">
                         {filteredPending.length}
                     </span>
                 </CardTitle>
-                <CardDescription className="text-amber-700/70">Requires your immediate action</CardDescription>
+                <CardDescription className="text-amber-700/70">تحتاج موافقتك</CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
                 <div className="space-y-4">
@@ -68,7 +68,7 @@ const PendingApprovals = ({ filteredPending, onReview }) => {
                                     onClick={() => onReview(req)}
                                 >
                                     <UserCheck className="w-4 h-4 mr-2" />
-                                    Review
+                                    مراجعة
                                 </Button>
                             </div>
                         );

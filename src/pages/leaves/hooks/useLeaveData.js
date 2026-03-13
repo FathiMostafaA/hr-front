@@ -14,6 +14,7 @@ export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) =
     const [isLoading, setIsLoading] = useState(true);
     const [employees, setEmployees] = useState([]);
     const [hrRequests, setHrRequests] = useState([]);
+    const [balanceSummaryAll, setBalanceSummaryAll] = useState([]);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -57,10 +58,14 @@ export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) =
                 }
                 if (isAdmin) {
                     try {
-                        const allEmployees = await EmployeeService.getAll();
+                        const [allEmployees, summary] = await Promise.all([
+                            EmployeeService.getAll(),
+                            LeaveService.getLeaveBalanceSummary(currentYear)
+                        ]);
                         setEmployees(allEmployees);
+                        setBalanceSummaryAll(Array.isArray(summary) ? summary : []);
                     } catch (err) {
-                        console.error('Failed to fetch employees', err);
+                        console.error('Failed to fetch employees/summary', err);
                     }
                 }
                 setIsLoading(false);
@@ -161,13 +166,20 @@ export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) =
                }
             }
 
-            // Fetch all employees for HR actions (when we have employeeId)
+            // Fetch all employees and balance summary for HR
             if (isAdmin) {
                 try {
                     const allEmployees = await EmployeeService.getAll();
                     setEmployees(allEmployees);
                 } catch (err) {
                     console.error('Failed to fetch employees', err);
+                }
+                try {
+                    const summary = await LeaveService.getLeaveBalanceSummary(currentYear);
+                    setBalanceSummaryAll(Array.isArray(summary) ? summary : []);
+                } catch (err) {
+                    console.error('Failed to fetch balance summary', err);
+                    setBalanceSummaryAll([]);
                 }
             }
         } catch (err) {
@@ -217,6 +229,7 @@ export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) =
         employees,
         hrRequests,
         calendarEvents,
+        balanceSummaryAll,
         fetchData
     };
 };

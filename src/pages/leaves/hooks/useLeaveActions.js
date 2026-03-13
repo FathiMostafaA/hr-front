@@ -8,7 +8,12 @@ export const useLeaveActions = (fetchData, employeeId, isAdmin) => {
 
     const handleSubmit = async (form, setForm, leaveTypes, setShowModal) => {
         const selectedType = leaveTypes.find(t => t.id === form.leaveTypeId);
-        
+
+        if (isAdmin && !form.employeeId) {
+            toast.error('Please select an employee to add leave for.');
+            return;
+        }
+
         if (!form.startDate || (!form.endDate && !form.isHalfDay)) {
             toast.error('Please select start and end dates');
             return;
@@ -27,7 +32,12 @@ export const useLeaveActions = (fetchData, employeeId, isAdmin) => {
 
         setIsSubmitting(true);
         try {
-            const finalEmployeeId = isAdmin ? form.employeeId || employeeId : employeeId;
+            const finalEmployeeId = isAdmin ? (form.employeeId || employeeId) : employeeId;
+            if (!finalEmployeeId) {
+                toast.error('Unable to determine employee. Please select an employee.');
+                setIsSubmitting(false);
+                return;
+            }
             let attachmentUrl = null;
 
             if (form.attachment) {
