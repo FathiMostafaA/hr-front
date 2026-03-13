@@ -27,6 +27,7 @@ import ReportsPage from './pages/reports/ReportsPage';
 import CareersPage from './pages/careers/CareersPage';
 import AccessDeniedPage from './pages/errors/AccessDeniedPage';
 import HolidaysPage from './pages/admin/HolidaysPage';
+import CalendarPage from './pages/calendar/CalendarPage';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -139,6 +140,12 @@ function App() {
           <Route path="training" element={
             <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR', 'Manager', 'Employee']}>
               <TrainingPage />
+            </RoleProtectedRoute>
+          } />
+
+          <Route path="company-calendar" element={
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR', 'Manager', 'Employee']}>
+              <CalendarPage />
             </RoleProtectedRoute>
           } />
 

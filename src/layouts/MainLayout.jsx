@@ -71,6 +71,7 @@ const MainLayoutContent = () => {
     // RBAC: Define allowed roles for each route
     const allNavItems = useMemo(() => [
         { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
+        { icon: CalendarDays, label: 'Company Calendar', href: '/company-calendar', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
         { icon: Users, label: 'Employees', href: '/employees', roles: ['Admin', 'HRManager', 'HR'] },
         { icon: TrendingUp, label: 'Org Chart', href: '/org-chart', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
         { icon: Building2, label: 'Departments', href: '/departments', roles: ['Admin', 'HRManager', 'HR'] },
