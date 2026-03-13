@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { X, Calendar } from 'lucide-react';
 import { holidayService } from '../../api/services/holidayService';
-import { useNotification } from '../../context/NotificationContext';
+import { toast } from 'react-hot-toast';
 import Button from '../../components/ui/Button';
 
 const CreateHolidayModal = ({ isOpen, onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
-  const { showNotification } = useNotification();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -30,10 +29,10 @@ const CreateHolidayModal = ({ isOpen, onClose, onCreated }) => {
     try {
       setLoading(true);
       await holidayService.createHoliday(formData);
-      showNotification('Holiday created successfully', 'success');
+      toast.success('Holiday created successfully');
       onCreated();
     } catch (error) {
-      showNotification(error.response?.data?.message || 'Failed to create holiday', 'error');
+      toast.error(error.response?.data?.message || 'Failed to create holiday');
     } finally {
       setLoading(false);
     }

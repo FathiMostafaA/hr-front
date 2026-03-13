@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Search, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { holidayService } from '../../api/services/holidayService';
-import { useNotification } from '../../context/NotificationContext';
+import { toast } from 'react-hot-toast';
 import Button from '../../components/ui/Button';
 import CreateHolidayModal from './CreateHolidayModal';
 
@@ -11,7 +11,6 @@ const HolidaysPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { showNotification } = useNotification();
 
   useEffect(() => {
     fetchHolidays();
@@ -23,7 +22,7 @@ const HolidaysPage = () => {
       const data = await holidayService.getAllHolidays();
       setHolidays(data || []);
     } catch (error) {
-      showNotification('Failed to fetch holidays', 'error');
+      toast.error('Failed to fetch holidays');
     } finally {
       setLoading(false);
     }
