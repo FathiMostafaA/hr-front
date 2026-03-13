@@ -29,6 +29,7 @@ import { PresenceProvider } from '../context/PresenceContext';
 import NotificationDropdown from '../components/ui/NotificationDropdown';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../utils/cn';
+import { getRoleDisplayName } from '../config/roleDisplayMap';
 import Button from '../components/ui/Button';
 
 const SidebarItem = ({ icon: Icon, label, href, active, collapsed }) => (
@@ -150,6 +151,17 @@ const MainLayoutContent = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, navItems]);
 
+    // Click-outside to close search results
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (searchRef.current && !searchRef.current.contains(e.target)) {
+                setSearchResults([]);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden">
             {/* Desktop Sidebar */}
@@ -181,7 +193,7 @@ const MainLayoutContent = () => {
                         <SidebarItem
                             key={item.href}
                             {...item}
-                            active={location.pathname === item.href}
+                            active={location.pathname === item.href || location.pathname.startsWith(item.href + '/')}
                             collapsed={sidebarCollapsed}
                         />
                     ))}
@@ -218,10 +230,17 @@ const MainLayoutContent = () => {
                                 <Search className={`w-4 h-4 ${isSearching ? 'text-accent animate-pulse' : 'text-slate-400'}`} />
                                 <input
                                     type="text"
-                                    placeholder="Search employees..."
+                                    placeholder="بحث عن موظفين..."
                                     className="bg-transparent border-none text-sm outline-none w-full text-slate-600 placeholder:text-slate-400"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Escape') {
+                                            setSearchResults([]);
+                                            setSearchTerm('');
+                                            e.target.blur();
+                                        }
+                                    }}
                                 />
                             </div>
 
@@ -229,7 +248,7 @@ const MainLayoutContent = () => {
                             {searchResults.length > 0 && (
                                 <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-lg shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50">
                                     <div className="p-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                        Results ({searchResults.length})
+                                        نتائج ({searchResults.length})
                                     </div>
                                     {searchResults.map((result, index) => (
                                         <div
@@ -259,6 +278,13 @@ const MainLayoutContent = () => {
                                     ))}
                                 </div>
                             )}
+                            {searchTerm.trim() && !isSearching && searchResults.length === 0 && (
+                                <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-lg shadow-xl border border-slate-100 z-50 p-6 text-center">
+                                    <Search className="w-6 h-6 mx-auto mb-2 text-slate-300" />
+                                    <p className="text-sm font-medium text-slate-500">لا توجد نتائج لـ "{searchTerm}"</p>
+                                    <p className="text-xs text-slate-400 mt-1">جرّب البحث بالاسم الأول أو القسم</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -280,7 +306,7 @@ const MainLayoutContent = () => {
                         <div className="flex items-center gap-3">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-semibold text-slate-900">{user?.fullName || 'User Name'}</p>
-                                <p className="text-xs text-slate-500 capitalize">{user?.roles?.[0] || 'Administrator'}</p>
+                                <p className="text-xs text-slate-500 capitalize">{getRoleDisplayName(user?.roles?.[0]) || 'مستخدم'}</p>
                             </div>
                             <div
                                 className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-blue-500 border-2 border-white shadow-sm flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-md transition-shadow"
@@ -319,7 +345,7 @@ const MainLayoutContent = () => {
                                 <SidebarItem
                                     key={item.href}
                                     {...item}
-                                    active={location.pathname === item.href}
+                                    active={location.pathname === item.href || location.pathname.startsWith(item.href + '/')}
                                     collapsed={false}
                                 />
                             ))}

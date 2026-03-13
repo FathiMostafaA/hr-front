@@ -1,4 +1,5 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import MainLayout from './layouts/MainLayout';
@@ -24,11 +25,16 @@ import SanctionsPage from './pages/sanctions/SanctionsPage';
 import AuditLogsPage from './pages/admin/AuditLogsPage';
 import ReportsPage from './pages/reports/ReportsPage';
 import CareersPage from './pages/careers/CareersPage';
+import AccessDeniedPage from './pages/errors/AccessDeniedPage';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-slate-50">
+      <Loader2 className="w-8 h-8 text-accent animate-spin" />
+    </div>
+  );
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -40,13 +46,17 @@ const ProtectedRoute = ({ children }) => {
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-slate-50">
+      <Loader2 className="w-8 h-8 text-accent animate-spin" />
+    </div>
+  );
 
   const userRoles = user?.roles || [];
   const hasAccess = allowedRoles.some(role => userRoles.includes(role));
 
   if (!hasAccess) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/access-denied" replace state={{ requiredRoles: allowedRoles }} />;
   }
 
   return children;
@@ -59,6 +69,7 @@ function App() {
         {/* Auth Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/activate" element={<ActivatePage />} />
+        <Route path="/access-denied" element={<AccessDeniedPage />} />
 
         {/* Public Careers Routes */}
         <Route path="/careers" element={<CareersPage />} />

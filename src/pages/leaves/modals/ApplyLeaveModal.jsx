@@ -146,8 +146,8 @@ const ApplyLeaveModal = ({
                                     onChange={e => setForm(f => ({ ...f, halfDayPeriod: e.target.value }))}
                                     className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none appearance-none border-r-[16px] border-transparent"
                                 >
-                                    <option value="Morning">Morning</option>
-                                    <option value="Afternoon">Afternoon</option>
+                                    <option value="Morning">صباحية</option>
+                                    <option value="Afternoon">مسائية</option>
                                 </select>
                             </div>
                         ) : (
@@ -181,7 +181,7 @@ const ApplyLeaveModal = ({
                                 </div>
                             </div>
                             <span className="text-3xl font-black text-accent tracking-tighter">
-                                {calculateDays()} <span className="text-[10px] uppercase font-black">Days</span>
+                                {calculateDays()} <span className="text-[10px] uppercase font-black">يوم</span>
                             </span>
                         </div>
                     )}
