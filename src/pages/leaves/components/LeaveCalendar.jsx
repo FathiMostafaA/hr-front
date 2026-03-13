@@ -11,7 +11,7 @@ const LeaveCalendar = ({ currentMonth, setCurrentMonth, calendarEvents }) => {
             <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
                 <CardTitle className="text-lg flex items-center gap-2 font-display">
                     <CalendarIcon className="w-5 h-5 text-accent" />
-                    تقويم الإجازات
+                    Leave Calendar
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
@@ -49,11 +49,11 @@ const LeaveCalendar = ({ currentMonth, setCurrentMonth, calendarEvents }) => {
                 <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                        <span className="text-slate-500">مُعتمدة</span>
+                        <span className="text-slate-500">APPROVED</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-amber-500" />
-                        <span className="text-slate-500">قيد الموافقة</span>
+                        <span className="text-slate-500">PENDING</span>
                     </div>
                 </div>
             </CardContent>

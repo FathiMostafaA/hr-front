@@ -27,11 +27,11 @@ export const getLeaveTypeUI = (code) => UI_CONFIG[code?.toUpperCase()] || UI_CON
 
 export const StatusBadge = ({ status }) => {
     const config = {
-        Pending: { icon: Clock, variant: 'warning', label: 'قيد الموافقة', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-        Approved: { icon: CheckCircle2, variant: 'success', label: 'مُعتمدة', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-        Rejected: { icon: XCircle, variant: 'error', label: 'مرفوضة', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
-        Cancelled: { icon: XCircle, variant: 'default', label: 'ملغية', bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200' },
-        CancelledByHR: { icon: XCircle, variant: 'default', label: 'ملغية (HR)', bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' },
+        Pending: { icon: Clock, variant: 'warning', label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+        Approved: { icon: CheckCircle2, variant: 'success', label: 'Approved', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+        Rejected: { icon: XCircle, variant: 'error', label: 'Rejected', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+        Cancelled: { icon: XCircle, variant: 'default', label: 'Cancelled', bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200' },
+        CancelledByHR: { icon: XCircle, variant: 'default', label: 'Cancelled (HR)', bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' },
     };
     const c = config[status] || config.Pending;
     return (

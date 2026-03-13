@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -10,20 +10,52 @@ const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const emailRef = useRef(null);
+    const passwordRef = useRef(null);
+
+    const validate = () => {
+        const errors = {};
+        if (!email.trim()) {
+            errors.email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(email)) {
+            errors.email = 'Enter a valid email address';
+        }
+        if (!password) {
+            errors.password = 'Password is required';
+        } else if (password.length < 4) {
+            errors.password = 'Password is too short';
+        }
+        return errors;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setFieldErrors({});
+
+        const errors = validate();
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            // Focus on first invalid field
+            if (errors.email) emailRef.current?.focus();
+            else if (errors.password) passwordRef.current?.focus();
+            return;
+        }
+
         setIsLoading(true);
 
         try {
             await login({ email, password });
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+            const msg = err.response?.data?.message || 'Invalid credentials. Please check your email and password.';
+            setError(msg);
+            // Focus password field on auth error (most common source)
+            passwordRef.current?.focus();
         } finally {
             setIsLoading(false);
         }
@@ -55,30 +87,35 @@ const LoginPage = () => {
                             <div className="relative">
                                 <User className="absolute left-3 top-9 w-4 h-4 text-slate-400" />
                                 <Input
+                                    ref={emailRef}
                                     label="Email Address"
                                     type="email"
                                     placeholder="name@company.com"
                                     className="pl-10"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => { setEmail(e.target.value); setFieldErrors(f => ({ ...f, email: '' })); }}
+                                    error={fieldErrors.email}
                                     required
                                 />
                             </div>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-9 w-4 h-4 text-slate-400" />
                                 <Input
+                                    ref={passwordRef}
                                     label="Password"
                                     type="password"
                                     placeholder="••••••••"
                                     className="pl-10"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => { setPassword(e.target.value); setFieldErrors(f => ({ ...f, password: '' })); }}
+                                    error={fieldErrors.password}
                                     required
                                 />
                             </div>
 
                             {error && (
-                                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-destructive text-sm font-medium">
+                                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-destructive text-sm font-medium flex items-center gap-2" role="alert">
+                                    <AlertCircle className="w-4 h-4 shrink-0" />
                                     {error}
                                 </div>
                             )}
@@ -107,7 +144,7 @@ const LoginPage = () => {
                 </Card>
 
                 <p className="text-center text-xs text-slate-400 mt-8">
-                    © 2026 HR Master Pro. All rights reserved.
+                    © 2026 HR Master. All rights reserved.
                 </p>
             </div>
         </div>

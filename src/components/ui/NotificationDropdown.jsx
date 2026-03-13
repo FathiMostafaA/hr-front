@@ -40,20 +40,20 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
     return (
         <div ref={dropdownRef} className="absolute right-0 top-16 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-50 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                <h3 className="font-semibold text-slate-800">الإشعارات ({unreadCount})</h3>
+                <h3 className="font-semibold text-slate-800">Notifications ({unreadCount})</h3>
                 <div className="flex items-center gap-2">
                     {notifications.length > 0 && (
                         <button
                             onClick={markAllAsRead}
                             className="text-xs text-slate-500 hover:text-accent transition-colors"
                         >
-                            تعليم الكل كمقروء
+                            Mark all as read
                         </button>
                     )}
                     <button
                         onClick={onClose}
                         className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                        aria-label="إغلاق الإشعارات"
+                        aria-label="Close notifications"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -64,7 +64,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
                 {notifications.length === 0 ? (
                     <div className="p-8 text-center text-slate-500">
                         <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                        <p className="text-sm">لا توجد إشعارات جديدة</p>
+                        <p className="text-sm">No new notifications</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-50">
@@ -79,7 +79,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
                             >
                                 <div className="flex justify-between items-start mb-1">
                                     <h4 className={cn("text-sm font-medium", !notification.isRead ? "text-slate-900" : "text-slate-600")}>
-                                        {notification.title || "إشعار"}
+                                        {notification.title || "Notification"}
                                     </h4>
                                     <span className="text-[10px] text-slate-400 whitespace-nowrap ml-2">
                                         {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

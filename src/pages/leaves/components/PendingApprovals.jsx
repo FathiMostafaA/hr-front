@@ -15,12 +15,12 @@ const PendingApprovals = ({ filteredPending, onReview }) => {
                     <div className="p-2 rounded-lg bg-amber-500 text-white shadow-md">
                         <Clock className="w-5 h-5 animate-pulse" />
                     </div>
-                    طلبات بانتظار الموافقة
+                    Pending Approvals
                     <span className="bg-amber-200 text-amber-800 px-2.5 py-0.5 rounded-full text-xs font-bold border-none ml-2">
                         {filteredPending.length}
                     </span>
                 </CardTitle>
-                <CardDescription className="text-amber-700/70">تحتاج موافقتك</CardDescription>
+                <CardDescription className="text-amber-700/70">Require your attention</CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
                 <div className="space-y-4">
@@ -39,9 +39,7 @@ const PendingApprovals = ({ filteredPending, onReview }) => {
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between gap-4">
                                             <p className="text-base font-bold text-slate-900 mb-0.5">{req.employeeName}</p>
-                                            <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl text-[10px] font-black border border-emerald-100/50 shadow-sm">
-                                                الرصيد: {req.remainingBalance} يوم
-                                            </div>
+                                                Balance: {req.remainingBalance} days
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
                                             <span className={cn("px-2 py-0.5 rounded-full", ui.bgLight, ui.textColor)}>
@@ -68,7 +66,7 @@ const PendingApprovals = ({ filteredPending, onReview }) => {
                                     onClick={() => onReview(req)}
                                 >
                                     <UserCheck className="w-4 h-4 mr-2" />
-                                    مراجعة
+                                    Review
                                 </Button>
                             </div>
                         );

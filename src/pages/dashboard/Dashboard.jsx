@@ -14,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import Badge from '../../components/ui/Badge';
 import AnalyticsService from '../../api/services/analyticsService';
 import { useAuth } from '../../context/AuthContext';
+import RoleOnboardingCards from '../../components/ui/RoleOnboardingCards';
 
 const StatCard = ({ title, value, icon: Icon, trend, trendValue, color }) => (
     <Card className="hover:scale-[1.02] transition-transform duration-200">
@@ -121,6 +122,9 @@ const Dashboard = () => {
                     </div>
                 )}
             </div>
+
+            {/* Onboarding Cards */}
+            <RoleOnboardingCards />
 
             {/* Stats Grid - Show to Privileged Roles */}
             {showStats && (

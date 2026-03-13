@@ -117,6 +117,17 @@ const PayrollPage = () => {
                 </div>
             </div>
 
+            {/* Payroll Routing Hint Banner */}
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                    <h4 className="text-sm font-bold text-blue-900">Admin/HR View Active</h4>
+                    <p className="text-xs text-blue-700 mt-1">
+                        You are viewing the organization-wide payroll management console because of your administrative privileges. Employees see their individual `/my-payroll` view instead.
+                    </p>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="md:col-span-1 border-accent/20 bg-accent/[0.02]">
                     <CardHeader>

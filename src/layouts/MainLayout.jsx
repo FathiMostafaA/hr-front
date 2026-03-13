@@ -58,6 +58,7 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed }) => (
 const MainLayoutContent = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const [notificationOpen, setNotificationOpen] = useState(false);
     const { user, logout } = useAuth();
     const { unreadCount } = useNotification();
@@ -177,7 +178,7 @@ const MainLayoutContent = () => {
                             <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white">
                                 <Users className="w-5 h-5" />
                             </div>
-                            <span>Master</span>
+                            <span>HR Master</span>
                         </div>
                     )}
                     <button
@@ -225,6 +226,14 @@ const MainLayoutContent = () => {
                         >
                             <Menu className="w-6 h-6" />
                         </button>
+
+                        {/* Mobile Search Button */}
+                        <button
+                            className="sm:hidden p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+                        >
+                            <Search className="w-5 h-5" />
+                        </button>
                         <div className="relative w-full max-w-md hidden sm:block" ref={searchRef}>
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg w-full focus-within:ring-2 focus-within:ring-accent/20 transition-all">
                                 <Search className={`w-4 h-4 ${isSearching ? 'text-accent animate-pulse' : 'text-slate-400'}`} />
@@ -248,7 +257,7 @@ const MainLayoutContent = () => {
                             {searchResults.length > 0 && (
                                 <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-lg shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50">
                                     <div className="p-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                        نتائج ({searchResults.length})
+                                        Results ({searchResults.length})
                                     </div>
                                     {searchResults.map((result, index) => (
                                         <div
@@ -281,8 +290,8 @@ const MainLayoutContent = () => {
                             {searchTerm.trim() && !isSearching && searchResults.length === 0 && (
                                 <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-lg shadow-xl border border-slate-100 z-50 p-6 text-center">
                                     <Search className="w-6 h-6 mx-auto mb-2 text-slate-300" />
-                                    <p className="text-sm font-medium text-slate-500">لا توجد نتائج لـ "{searchTerm}"</p>
-                                    <p className="text-xs text-slate-400 mt-1">جرّب البحث بالاسم الأول أو القسم</p>
+                                    <p className="text-sm font-medium text-slate-500">No results found for "{searchTerm}"</p>
+                                    <p className="text-xs text-slate-400 mt-1">Try searching by first name or department</p>
                                 </div>
                             )}
                         </div>
@@ -306,7 +315,14 @@ const MainLayoutContent = () => {
                         <div className="flex items-center gap-3">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-semibold text-slate-900">{user?.fullName || 'User Name'}</p>
-                                <p className="text-xs text-slate-500 capitalize">{getRoleDisplayName(user?.roles?.[0]) || 'مستخدم'}</p>
+                                <div className="flex items-center gap-1 justify-end mt-0.5">
+                                    <p className="text-xs text-slate-500 capitalize">{getRoleDisplayName(user?.roles?.[0]) || 'User'}</p>
+                                    {user?.roles?.length > 1 && (
+                                        <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold" title={user.roles.slice(1).map(getRoleDisplayName).join(', ')}>
+                                            +{user.roles.length - 1}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div
                                 className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-blue-500 border-2 border-white shadow-sm flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-md transition-shadow"
@@ -361,6 +377,76 @@ const MainLayoutContent = () => {
                             </Button>
                         </div>
                     </aside>
+                </div>
+            )}            {/* Mobile Search Overlay */}
+            {mobileSearchOpen && (
+                <div className="fixed inset-0 z-50 sm:hidden">
+                    <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setMobileSearchOpen(false)} />
+                    <div className="absolute top-0 left-0 right-0 bg-white p-4 shadow-xl animate-in slide-in-from-top duration-300">
+                        <div className="flex items-center gap-3">
+                            <div className="flex-1 relative" ref={searchRef}>
+                                <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg w-full focus-within:ring-2 focus-within:ring-accent/20 transition-all">
+                                    <Search className={`w-4 h-4 ${isSearching ? 'text-accent animate-pulse' : 'text-slate-400'}`} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search employees..."
+                                        className="bg-transparent border-none text-sm outline-none w-full text-slate-600 placeholder:text-slate-400"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') {
+                                                setSearchResults([]);
+                                                setSearchTerm('');
+                                                setMobileSearchOpen(false);
+                                            }
+                                        }}
+                                        autoFocus
+                                    />
+                                </div>
+                                {searchResults.length > 0 && (
+                                    <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-lg shadow-xl border border-slate-100 max-h-72 overflow-y-auto z-50">
+                                        {searchResults.map((result, index) => (
+                                            <div
+                                                key={result.id + index}
+                                                className="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-center gap-3"
+                                                onClick={() => {
+                                                    navigate(result.url);
+                                                    setSearchTerm('');
+                                                    setSearchResults([]);
+                                                    setMobileSearchOpen(false);
+                                                }}
+                                            >
+                                                {result.type === 'page' ? (
+                                                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                                        <result.icon className="w-4 h-4" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent text-xs font-bold">
+                                                        {result.avatarData.char}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-700">{result.title}</p>
+                                                    <p className="text-xs text-slate-500">{result.subtitle}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {searchTerm.trim() && !isSearching && searchResults.length === 0 && (
+                                    <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-lg shadow-xl border border-slate-100 z-50 p-6 text-center">
+                                        <p className="text-sm font-medium text-slate-500">No results found for "{searchTerm}"</p>
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => { setMobileSearchOpen(false); setSearchTerm(''); setSearchResults([]); }}
+                                className="p-2 text-slate-400 hover:text-slate-600"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

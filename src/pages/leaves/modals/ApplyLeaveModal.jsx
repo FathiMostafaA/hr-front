@@ -34,10 +34,10 @@ const ApplyLeaveModal = ({
                         </button>
                     </div>
                     <h2 className="text-2xl font-black text-slate-900 font-display tracking-tight">
-                        {isAdmin ? 'إضافة إجازة لموظف' : 'طلب إجازة'}
+                        {isAdmin ? 'Add leave for employee' : 'Apply for Leave'}
                     </h2>
                     <p className="text-slate-500 mt-1 font-medium">
-                        {isAdmin ? 'اختر الموظف ثم نوع الإجازة والتواريخ. كل موظف له أرصدته الخاصة.' : 'اختر النوع والتواريخ.'}
+                        {isAdmin ? 'Select the employee, leave type and dates. Each employee has their own balances.' : 'Select leave type and dates.'}
                     </p>
                 </div>
 
@@ -45,23 +45,23 @@ const ApplyLeaveModal = ({
                     {/* Employee Selector (HR/Admin only) - required so admin can add leave for any employee */}
                     {isAdmin && (
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">الموظف *</label>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Employee *</label>
                             <select
                                 value={form.employeeId}
                                 onChange={e => setForm(f => ({ ...f, employeeId: e.target.value }))}
                                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none appearance-none cursor-pointer border-r-[16px] border-transparent"
                                 required
                             >
-                                <option value="">اختر الموظف...</option>
+                                <option value="">Select employee...</option>
                                 {employees.map(emp => (
                                     <option key={emp.id} value={emp.id}>
-                                        {emp.firstName} {emp.lastName} — {emp.departmentName || 'بدون قسم'}
+                                        {emp.firstName} {emp.lastName} — {emp.departmentName || 'No department'}
                                     </option>
                                 ))}
                             </select>
                             {selectedBalances.length > 0 && (
                                 <div className="mt-3 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">رصيد الموظف الحالي ({currentYear})</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Current Employee Balance ({currentYear})</p>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedBalances.map((b, i) => {
                                             const remaining = b.remainingDays ?? b.RemainingDays ?? 0;
@@ -81,7 +81,7 @@ const ApplyLeaveModal = ({
 
                     {/* Leave Type */}
                     <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">نوع الإجازة</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Leave Type</label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {leaveTypes.map(type => {
                                 const ui = getLeaveTypeUI(type.code);
@@ -103,7 +103,7 @@ const ApplyLeaveModal = ({
                                             <Icon className="w-5 h-5" />
                                         </div>
                                         <span className="text-[10px] font-bold tracking-tight uppercase line-clamp-1">
-                                            {userLanguage === 'ar' ? type.nameAr : type.name}
+                                            {type.name}
                                         </span>
                                     </button>
                                 );
@@ -120,13 +120,13 @@ const ApplyLeaveModal = ({
                             onChange={e => setForm(f => ({ ...f, isHalfDay: e.target.checked }))}
                             className="w-4 h-4 rounded text-accent focus:ring-accent border-slate-300"
                         />
-                        <label htmlFor="isHalfDay" className="text-sm font-bold text-slate-700">نصف يوم فقط</label>
+                        <label htmlFor="isHalfDay" className="text-sm font-bold text-slate-700">Half day only</label>
                     </div>
 
                     {/* Dates */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">من تاريخ</label>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Start Date</label>
                             <div className="relative group">
                                 <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
                                 <input
@@ -140,19 +140,19 @@ const ApplyLeaveModal = ({
                         </div>
                         {form.isHalfDay ? (
                             <div className="space-y-2">
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">الفترة</label>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Period</label>
                                 <select
                                     value={form.halfDayPeriod}
                                     onChange={e => setForm(f => ({ ...f, halfDayPeriod: e.target.value }))}
                                     className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none appearance-none border-r-[16px] border-transparent"
                                 >
-                                    <option value="Morning">صباحية</option>
-                                    <option value="Afternoon">مسائية</option>
+                                    <option value="Morning">Morning</option>
+                                    <option value="Afternoon">Afternoon</option>
                                 </select>
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">إلى تاريخ</label>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">End Date</label>
                                 <div className="relative group">
                                     <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
                                     <input
@@ -176,12 +176,12 @@ const ApplyLeaveModal = ({
                                     <CalendarCheck className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <span className="text-sm font-black text-accent block">المدة التقريبية</span>
-                                    <span className="text-xs text-accent/70 font-bold uppercase tracking-tighter">أيام العمل المحسوبة</span>
+                                    <span className="text-sm font-black text-accent block">Estimated Duration</span>
+                                    <span className="text-xs text-accent/70 font-bold uppercase tracking-tighter">Calculated Working Days</span>
                                 </div>
                             </div>
                             <span className="text-3xl font-black text-accent tracking-tighter">
-                                {calculateDays()} <span className="text-[10px] uppercase font-black">يوم</span>
+                                {calculateDays()} <span className="text-[10px] uppercase font-black">days</span>
                             </span>
                         </div>
                     )}
@@ -190,7 +190,7 @@ const ApplyLeaveModal = ({
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
                             <label className="flex items-center gap-2 text-xs font-black text-rose-500 uppercase tracking-widest">
                                 <FileWarning className="w-4 h-4" />
-                                مرفق مطلوب
+                                Attachment Required
                             </label>
                             <div className="relative group">
                                 <UploadCloud className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
@@ -206,12 +206,12 @@ const ApplyLeaveModal = ({
                     )}
                     {/* Reason */}
                     <div className="space-y-2">
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">السبب / ملاحظة</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Reason / Note</label>
                         <textarea
                             rows={3}
                             value={form.reason}
                             onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
-                            placeholder="أي تفاصيل إضافية للطلب..."
+                            placeholder="Any additional details..."
                             className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-medium text-slate-900 focus:ring-4 focus:ring-accent/10 transition-all outline-none resize-none"
                         />
                     </div>
@@ -224,7 +224,7 @@ const ApplyLeaveModal = ({
                             className="flex-1 rounded-2xl py-7 text-sm font-bold border-slate-200 text-slate-500 hover:bg-slate-50"
                             onClick={onClose}
                         >
-                            إلغاء
+                            Cancel
                         </Button>
                         <Button
                             type="submit"
@@ -237,7 +237,7 @@ const ApplyLeaveModal = ({
                             ) : (
                                 <>
                                     <Send className="w-4 h-4 mr-2" />
-                                    إرسال الطلب
+                                    Submit Request
                                 </>
                             )}
                         </Button>

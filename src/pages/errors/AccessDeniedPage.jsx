@@ -1,13 +1,21 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShieldAlert, ArrowRight, Home } from 'lucide-react';
+import { ShieldAlert, ArrowRight, Home, SendHorizonal } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Button from '../../components/ui/Button';
-import { getRoleDisplayName } from '../../config/roleDisplayMap';
 
 const AccessDeniedPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const requiredRoles = location.state?.requiredRoles || [];
+
+    const handleRequestAccess = () => {
+        // In a real system, this would open a workflow / send a request to admin
+        toast.success('Access request sent to system administrator', {
+            icon: '📩',
+            duration: 4000,
+        });
+    };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -20,11 +28,11 @@ const AccessDeniedPage = () => {
                 {/* Title */}
                 <div className="space-y-2">
                     <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                        ليس لديك صلاحية الوصول
+                        Access Denied
                     </h1>
                     <p className="text-slate-500 text-sm leading-relaxed">
-                        لا تملك الصلاحيات المطلوبة للوصول إلى هذه الصفحة.
-                        يرجى التواصل مع مدير النظام إذا كنت تعتقد أن هذا خطأ.
+                        You do not have the required permissions to access this page.
+                        Please contact the system administrator if you believe this is an error.
                     </p>
                 </div>
 
@@ -32,7 +40,7 @@ const AccessDeniedPage = () => {
                 {requiredRoles.length > 0 && (
                     <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                            الصلاحيات المطلوبة
+                            Required Permissions
                         </p>
                         <div className="flex flex-wrap justify-center gap-2">
                             {requiredRoles.map((role) => (
@@ -40,7 +48,7 @@ const AccessDeniedPage = () => {
                                     key={role}
                                     className="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700"
                                 >
-                                    {getRoleDisplayName(role)}
+                                    {role}
                                 </span>
                             ))}
                         </div>
@@ -48,28 +56,38 @@ const AccessDeniedPage = () => {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-3 justify-center pt-2">
+                <div className="flex flex-col items-center gap-3 pt-2">
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            className="rounded-xl px-6"
+                            onClick={() => navigate(-1)}
+                        >
+                            <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                            Go Back
+                        </Button>
+                        <Button
+                            variant="accent"
+                            className="rounded-xl px-6 shadow-lg shadow-accent/20"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            <Home className="w-4 h-4 mr-2" />
+                            Dashboard
+                        </Button>
+                    </div>
                     <Button
-                        variant="outline"
-                        className="rounded-xl px-6"
-                        onClick={() => navigate(-1)}
+                        variant="ghost"
+                        className="rounded-xl px-6 text-accent hover:bg-accent/10"
+                        onClick={handleRequestAccess}
                     >
-                        <ArrowRight className="w-4 h-4 ml-2 rotate-180" />
-                        العودة
-                    </Button>
-                    <Button
-                        variant="accent"
-                        className="rounded-xl px-6 shadow-lg shadow-accent/20"
-                        onClick={() => navigate('/dashboard')}
-                    >
-                        <Home className="w-4 h-4 ml-2" />
-                        الرئيسية
+                        <SendHorizonal className="w-4 h-4 mr-2" />
+                        Request Access
                     </Button>
                 </div>
 
                 {/* Error Code */}
                 <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest pt-4">
-                    خطأ 403 — الوصول مرفوض
+                    Error 403 — Forbidden
                 </p>
             </div>
         </div>

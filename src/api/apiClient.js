@@ -82,10 +82,17 @@ apiClient.interceptors.response.use(
 
         // Handle 403 Forbidden
         if (error.response?.status === 403) {
-            toast.error('ليس لديك صلاحية للقيام بهذا الإجراء', {
-                id: 'forbidden-error',
-                duration: 4000,
-            });
+            const refCode = `ERR-403-${Date.now().toString(36).slice(-5).toUpperCase()}`;
+            const endpoint = originalRequest?.url || '';
+            toast.error(
+                `You do not have permission to perform this action.\n\nReference Code: ${refCode}`,
+                {
+                    id: 'forbidden-error',
+                    duration: 6000,
+                    style: { whiteSpace: 'pre-line' },
+                }
+            );
+            console.warn(`[RBAC] 403 Forbidden — endpoint: ${endpoint}, ref: ${refCode}`);
             return Promise.reject(error);
         }
 
