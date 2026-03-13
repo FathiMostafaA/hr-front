@@ -81,7 +81,7 @@ const MainLayoutContent = () => {
         },
         { icon: Briefcase, label: 'Recruitment', href: '/recruitment', roles: ['Admin', 'HRManager', 'HR'] },
         { icon: TrendingUp, label: 'Performance', href: '/performance', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
-        { icon: FileText, label: 'Documents', href: '/documents', roles: ['Admin', 'HRManager', 'HR'] },
+        { icon: FileText, label: 'Documents', href: '/documents', roles: ['Admin', 'HRManager', 'HR', 'Employee'] },
         { icon: GraduationCap, label: 'Training', href: '/training', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
         { icon: ShieldAlert, label: 'Sanctions', href: '/sanctions', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },
         { icon: Newspaper, label: 'Company Feed', href: '/feed', roles: ['Admin', 'HRManager', 'HR', 'Manager', 'Employee'] },

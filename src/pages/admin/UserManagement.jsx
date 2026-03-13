@@ -444,6 +444,7 @@ const UserManagement = () => {
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                         >
                             <option value="Employee">Employee</option>
+                            <option value="Manager">Manager</option>
                             <option value="HR">HR Specialist</option>
                             <option value="HRManager">HR Manager</option>
                             <option value="Admin">System Administrator</option>

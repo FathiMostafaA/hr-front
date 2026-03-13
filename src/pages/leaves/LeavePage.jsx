@@ -25,9 +25,10 @@ import { BulkInitModal, CarryForwardModal, ManualInitModal } from './modals/HRMa
 const LeavePage = () => {
     const { user } = useAuth();
     const currentYear = new Date().getFullYear();
-    const employeeId = user?.employeeId || user?.id;
+    const employeeId = user?.employeeId ?? null;
     const isAdmin = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'HR');
     const canApprove = user?.roles?.some(r => r === 'Admin' || r === 'HRManager' || r === 'Manager');
+    const hasEmployeeContext = !!user?.employeeId;
 
     const [viewMode, setViewMode] = useState('my_leaves'); // 'my_leaves' | 'organization'
     const [statusFilter, setStatusFilter] = useState('All');
@@ -148,22 +149,26 @@ const LeavePage = () => {
                     size="lg"
                     className="shadow-lg shadow-accent/20 hover:shadow-xl hover:translate-y-[-2px] transition-all duration-300 rounded-xl px-8"
                     onClick={() => setShowModal(true)}
+                    disabled={!hasEmployeeContext && !isAdmin}
+                    title={!hasEmployeeContext && !isAdmin ? 'Link an employee to your account to apply for leave' : ''}
                 >
                     <Plus className="w-5 h-5 mr-2" />
                     Apply for Leave
                 </Button>
             </div>
 
-            {/* Balance Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {isLoading ? (
-                    Array(4).fill(0).map((_, i) => (
-                        <div key={i} className="h-32 rounded-2xl bg-slate-100 animate-pulse border border-slate-200" />
-                    ))
-                ) : balances.map((bal, i) => (
-                    <LeaveBalanceCard key={i} bal={bal} userLanguage={user?.language} />
-                ))}
-            </div>
+            {/* Balance Cards - only when user has employee context */}
+            {hasEmployeeContext && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {isLoading ? (
+                        Array(4).fill(0).map((_, i) => (
+                            <div key={i} className="h-32 rounded-2xl bg-slate-100 animate-pulse border border-slate-200" />
+                        ))
+                    ) : balances.map((bal, i) => (
+                        <LeaveBalanceCard key={i} bal={bal} userLanguage={user?.language} />
+                    ))}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Calendar View */}

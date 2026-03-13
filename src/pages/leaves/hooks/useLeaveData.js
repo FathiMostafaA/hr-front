@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import { format, eachDayOfInterval } from 'date-fns';
 
 export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) => {
-    const employeeId = user?.employeeId || user?.id;
+    const employeeId = user?.employeeId ?? null;
 
     const [requests, setRequests] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -16,10 +16,9 @@ export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) =
     const [hrRequests, setHrRequests] = useState([]);
 
     const fetchData = useCallback(async () => {
-        if (!employeeId) return;
         setIsLoading(true);
         try {
-            // Fetch dynamic leave types
+            // Always fetch leave types (needed for org view and dropdowns)
             const rawTypes = await LeaveService.getLeaveTypes();
             const types = (rawTypes || []).map(t => ({
                 id: t.id || t.Id,
@@ -31,7 +30,44 @@ export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) =
             }));
             setLeaveTypes(types);
 
-            // Fetch leave history
+            if (!employeeId) {
+                // No linked employee: fetch org data only for admins
+                if (isAdmin && viewMode === 'organization') {
+                    try {
+                        const orgLeavesResponse = await LeaveService.getAll({ page: 1, pageSize: 200 });
+                        const normalizedOrgHistory = (orgLeavesResponse?.items || []).map(r => ({
+                            id: r.id || r.Id,
+                            employeeName: r.employeeName || r.EmployeeName,
+                            leaveTypeName: r.leaveTypeName || r.LeaveTypeName,
+                            leaveTypeCode: r.leaveTypeCode || r.LeaveTypeCode,
+                            startDate: r.startDate || r.StartDate,
+                            endDate: r.endDate || r.EndDate,
+                            workingDays: r.workingDays || r.WorkingDays,
+                            status: r.status || r.Status,
+                            approverName: r.approverName || r.ApproverName,
+                            approvalComments: r.approvalComments || r.ApprovalComments,
+                            reason: r.reason || r.Reason,
+                            attachmentUrl: r.attachmentUrl || r.AttachmentUrl,
+                            isHalfDay: r.isHalfDay || r.IsHalfDay,
+                        }));
+                        setHrRequests(normalizedOrgHistory);
+                    } catch (err) {
+                        console.error('Failed to fetch org leaves', err);
+                    }
+                }
+                if (isAdmin) {
+                    try {
+                        const allEmployees = await EmployeeService.getAll();
+                        setEmployees(allEmployees);
+                    } catch (err) {
+                        console.error('Failed to fetch employees', err);
+                    }
+                }
+                setIsLoading(false);
+                return;
+            }
+
+            // Fetch leave history for current employee
             const rawHistory = await LeaveService.getHistory(employeeId);
             const normalizedHistory = (rawHistory || []).map(r => ({
                 id: r.id || r.Id,
@@ -125,7 +161,7 @@ export const useLeaveData = (user, isAdmin, canApprove, viewMode, currentYear) =
                }
             }
 
-            // Fetch all employees for HR actions
+            // Fetch all employees for HR actions (when we have employeeId)
             if (isAdmin) {
                 try {
                     const allEmployees = await EmployeeService.getAll();

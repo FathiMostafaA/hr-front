@@ -15,7 +15,7 @@ const documentService = {
         const formData = new FormData();
         formData.append('employeeId', employeeId);
         formData.append('documentName', documentName || file.name);
-        formData.append('documentType', documentType);
+        formData.append('documentType', documentType || 'Personal');
         formData.append('requiresSignature', requiresSignature);
         if (expiryDate) formData.append('expiryDate', expiryDate);
         formData.append('file', file);

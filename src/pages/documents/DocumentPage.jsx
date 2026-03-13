@@ -21,44 +21,61 @@ import { toast } from 'react-hot-toast';
 const DocumentPage = () => {
     const { user } = useAuth();
     const [docs, setDocs] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isPosting, setIsPosting] = useState(false);
+    const [expiringDocs, setExpiringDocs] = useState([]);
     const fileInputRef = React.useRef(null);
+
+    const canUpload = user?.roles?.some(r => ['Admin', 'HRManager', 'HR'].includes(r));
+    const canDelete = user?.roles?.some(r => ['Admin', 'HRManager'].includes(r));
 
     React.useEffect(() => {
         if (user?.employeeId) {
             fetchDocuments();
+        } else {
+            setIsLoading(false);
         }
-    }, [user]);
+    }, [user?.employeeId]);
 
     const fetchDocuments = async () => {
+        if (!user?.employeeId) return;
         try {
             const data = await documentService.getEmployeeDocuments(user.employeeId);
-            setDocs(data);
+            setDocs(Array.isArray(data) ? data : []);
         } catch (error) {
             toast.error('Failed to load documents');
+            setDocs([]);
         } finally {
             setIsLoading(false);
         }
     };
 
+    React.useEffect(() => {
+        if (canUpload || canDelete) {
+            documentService.getExpiringDocuments(30).then(setExpiringDocs).catch(() => setExpiringDocs([]));
+        }
+    }, [canUpload, canDelete]);
+
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file || !user?.employeeId) return;
 
         setIsPosting(true);
         try {
             await documentService.uploadDocument(
                 user.employeeId,
                 file,
-                'Personal', // Default type for now
+                file.name,
+                'Personal',
                 null,
                 false
             );
             toast.success('Document uploaded successfully');
             fetchDocuments();
         } catch (error) {
-            toast.error('Failed to upload document');
+            const msg = error.response?.data?.detail || error.message || 'Failed to upload document';
+            toast.error(msg);
         } finally {
             setIsPosting(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -106,46 +123,50 @@ const DocumentPage = () => {
                     <p className="text-slate-500 mt-1">Access policies, contracts, and personal documents.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline">
-                        Request Document
-                    </Button>
-                    <Button
-                        variant="accent"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isPosting}
-                    >
-                        {isPosting ? 'Uploading...' : (
-                            <>
-                                <Upload className="w-4 h-4 mr-2" />
-                                Upload File
-                            </>
-                        )}
-                    </Button>
+                    {canUpload && (
+                        <Button
+                            variant="accent"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isPosting || !user?.employeeId}
+                        >
+                            {isPosting ? 'Uploading...' : (
+                                <>
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Upload File
+                                </>
+                            )}
+                        </Button>
+                    )}
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1 space-y-6">
-                    <Card className="bg-slate-900 text-white border-0">
-                        <CardHeader>
-                            <CardTitle className="text-amber-400 flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5" />
-                                Urgent Action
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-slate-400 leading-relaxed mb-6">
-                                Your **Passport Copy** is set to expire in <span className="text-white font-bold underline decoration-amber-400 underline-offset-4">12 days</span>. Please upload a renewed version.
-                            </p>
-                            <Button
-                                variant="accent"
-                                className="w-full"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                Upload Renewed Copy
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    {expiringDocs.length > 0 && (
+                        <Card className="bg-slate-900 text-white border-0">
+                            <CardHeader>
+                                <CardTitle className="text-amber-400 flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5" />
+                                    Urgent Action
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {expiringDocs.slice(0, 3).map((doc) => {
+                                    const daysLeft = doc.expiryDate ? Math.ceil((new Date(doc.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+                                    return (
+                                        <p key={doc.id} className="text-sm text-slate-400 leading-relaxed">
+                                            <span className="text-white font-semibold">{doc.documentName}</span> expires in <span className="text-white font-bold underline decoration-amber-400 underline-offset-4">{daysLeft} days</span>.
+                                        </p>
+                                    );
+                                })}
+                                {canUpload && (
+                                    <Button variant="accent" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                                        Upload Renewed Copy
+                                    </Button>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Card>
                         <CardHeader className="pb-2">
@@ -175,6 +196,8 @@ const DocumentPage = () => {
                             <input
                                 type="text"
                                 placeholder="Search by name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all text-xs"
                             />
                         </div>
@@ -192,7 +215,11 @@ const DocumentPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {isLoading ? (
+                                    {!user?.employeeId ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-12 text-center text-slate-500">Your account is not linked to an employee record. Contact HR to access documents.</td>
+                                        </tr>
+                                    ) : isLoading ? (
                                         <tr>
                                             <td colSpan="5" className="px-6 py-12 text-center text-slate-400">Loading documents...</td>
                                         </tr>
@@ -200,7 +227,9 @@ const DocumentPage = () => {
                                         <tr>
                                             <td colSpan="5" className="px-6 py-12 text-center text-slate-400">No documents found.</td>
                                         </tr>
-                                    ) : docs.map((doc) => (
+                                    ) : docs
+                                        .filter(d => !searchTerm || (d.documentName || '').toLowerCase().includes(searchTerm.toLowerCase()) || (d.documentType || '').toLowerCase().includes(searchTerm.toLowerCase()))
+                                        .map((doc) => (
                                         <tr key={doc.id} className="group hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-3">
@@ -228,8 +257,8 @@ const DocumentPage = () => {
                                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDownload(doc.id, doc.documentName + '.pdf')}>
                                                     <Download className="w-4 h-4" />
                                                 </Button>
-                                                {user?.role === 'Admin' && (
-                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600" onClick={() => handleDelete(doc.id)}>
+                                                {canDelete && (
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600" onClick={() => handleDelete(doc.id)} title="Delete document">
                                                         <MoreHorizontal className="w-4 h-4" />
                                                     </Button>
                                                 )}

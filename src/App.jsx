@@ -108,7 +108,7 @@ function App() {
           } />
 
           <Route path="documents" element={
-            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR', 'Employee']}>
               <DocumentPage />
             </RoleProtectedRoute>
           } />
