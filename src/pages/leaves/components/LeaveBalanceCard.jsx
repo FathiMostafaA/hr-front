@@ -26,12 +26,12 @@ const LeaveBalanceCard = ({ bal, userLanguage }) => {
 
                 <div className="flex items-baseline gap-1.5 mb-4">
                     <span className="text-3xl font-black text-slate-900 tracking-tight">{bal.remainingDays}</span>
-                    <span className="text-xs font-semibold text-slate-400">/ {bal.totalEntitledDays} days left</span>
+                    <span className="text-xs font-semibold text-slate-400">/ {bal.totalEntitledDays} يوم متبقي</span>
                 </div>
 
                 <div className="space-y-1.5">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter">
-                        <span className="text-slate-400">Utilization</span>
+                        <span className="text-slate-400">الاستخدام</span>
                         <span className={ui.textColor}>{Math.round((bal.usedDays / bal.totalEntitledDays) * 100 || 0)}%</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">

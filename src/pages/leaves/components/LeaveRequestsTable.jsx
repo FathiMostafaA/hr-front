@@ -78,19 +78,19 @@ const LeaveRequestsTable = ({
                                                 {format(new Date(req.startDate), 'MMM d, yyyy')}
                                             </span>
                                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">
-                                                to {format(new Date(req.endDate), 'MMM d, yyyy')}
+                                                إلى {format(new Date(req.endDate), 'MMM d, yyyy')}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex items-baseline gap-1">
                                             <span className="text-sm font-black text-slate-900">{req.workingDays}</span>
-                                            <span className="text-[10px] text-slate-400 font-semibold italic">days</span>
+                                            <span className="text-[10px] text-slate-400 font-semibold italic">يوم</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
                                         <p className="text-sm text-slate-500 max-w-[180px] break-words">
-                                            {req.reason || <span className="text-slate-300 italic opacity-50 text-xs">No reason provided</span>}
+                                            {req.reason || <span className="text-slate-300 italic opacity-50 text-xs">لم يُذكر سبب</span>}
                                         </p>
                                         {req.attachmentUrl && (
                                             <a
@@ -100,7 +100,7 @@ const LeaveRequestsTable = ({
                                                 className="mt-2 text-[10px] font-bold text-accent bg-accent/10 px-2 py-1 rounded w-max flex items-center gap-1 hover:bg-accent hover:text-white transition-all"
                                             >
                                                 <FileWarning className="w-3 h-3" />
-                                                Review Doc
+                                                عرض المرفق
                                             </a>
                                         )}
                                     </td>
@@ -116,7 +116,7 @@ const LeaveRequestsTable = ({
                                                 onClick={() => viewMode === 'organization' ? onHRCancel(req.id) : onCancel(req.id)}
                                             >
                                                 <X className="w-3 h-3 mr-1" />
-                                                CANCEL
+                                                إلغاء
                                             </Button>
                                         ) : req.status === 'Approved' && viewMode === 'organization' ? (
                                             <Button
@@ -125,7 +125,7 @@ const LeaveRequestsTable = ({
                                                 className="h-8 rounded-lg text-rose-500 hover:bg-rose-50 group-hover:scale-105 transition-all font-bold text-[10px]"
                                                 onClick={() => onHRCancel(req.id)}
                                             >
-                                                HR CANCEL
+                                                إلغاء (HR)
                                             </Button>
                                         ) : req.approverName ? (
                                             <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ const LeaveRequestsTable = ({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest text-center block">Fixed</span>
+                                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest text-center block">ثابت</span>
                                         )}
                                     </td>
                                 </tr>
@@ -173,7 +173,7 @@ const LeaveRequestsTable = ({
                             </div>
                             {viewMode === 'organization' && (
                                 <div className="text-xs font-bold text-slate-700 bg-slate-50 p-2 rounded block w-full mt-2">
-                                    Employee: {req.employeeName}
+                                    الموظف: {req.employeeName}
                                 </div>
                             )}
                             {(req.status === 'Pending' || (req.status === 'Approved' && viewMode === 'organization')) && (
@@ -183,13 +183,13 @@ const LeaveRequestsTable = ({
                                     onClick={() => viewMode === 'organization' ? onHRCancel(req.id) : onCancel(req.id)}
                                 >
                                     <X className="w-4 h-4 mr-2" />
-                                    {viewMode === 'organization' ? 'HR CANCEL' : 'CANCEL REQUEST'}
+                                    {viewMode === 'organization' ? 'إلغاء (HR)' : 'إلغاء الطلب'}
                                 </Button>
                             )}
                             <div className="flex items-center justify-between pt-2 border-t border-slate-50">
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-lg font-black text-slate-900">{req.workingDays}</span>
-                                    <span className="text-[10px] text-slate-400 font-bold uppercase">Working Days</span>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase">أيام عمل</span>
                                 </div>
                                 {req.approverName && (
                                     <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">

@@ -40,7 +40,7 @@ const PendingApprovals = ({ filteredPending, onReview }) => {
                                         <div className="flex items-center justify-between gap-4">
                                             <p className="text-base font-bold text-slate-900 mb-0.5">{req.employeeName}</p>
                                             <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl text-[10px] font-black border border-emerald-100/50 shadow-sm">
-                                                BALANCE: {req.remainingBalance}d
+                                                الرصيد: {req.remainingBalance} يوم
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">

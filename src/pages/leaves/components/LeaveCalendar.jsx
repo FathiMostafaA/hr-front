@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/Card';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
-import { format, subMonths, addMonths, isWeekend } from 'date-fns';
+import { format, isWeekend } from 'date-fns';
 import { cn } from '../../../utils/cn';
 
 const LeaveCalendar = ({ currentMonth, setCurrentMonth, calendarEvents }) => {
@@ -11,25 +11,10 @@ const LeaveCalendar = ({ currentMonth, setCurrentMonth, calendarEvents }) => {
             <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
                 <CardTitle className="text-lg flex items-center gap-2 font-display">
                     <CalendarIcon className="w-5 h-5 text-accent" />
-                    Leave Calendar
+                    تقويم الإجازات
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <button
-                        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                        className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-500 hover:text-slate-900"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <span className="font-bold text-slate-900 text-lg">{format(currentMonth, 'MMMM yyyy')}</span>
-                    <button
-                        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                        className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-500 hover:text-slate-900"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                </div>
                 <div className="calendar-modern">
                     <DayPicker
                         month={currentMonth}
@@ -64,11 +49,11 @@ const LeaveCalendar = ({ currentMonth, setCurrentMonth, calendarEvents }) => {
                 <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                        <span className="text-slate-500">Approved</span>
+                        <span className="text-slate-500">مُعتمدة</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-amber-500" />
-                        <span className="text-slate-500">Pending</span>
+                        <span className="text-slate-500">قيد الموافقة</span>
                     </div>
                 </div>
             </CardContent>
