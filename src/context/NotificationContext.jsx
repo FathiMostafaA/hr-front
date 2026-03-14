@@ -55,32 +55,40 @@ export const NotificationProvider = ({ children }) => {
         }
 
         const token = getAccessToken();
-        console.log('NotificationProvider Tracking:', { 
-            isAuthenticated, 
-            authLoading, 
-            hasToken: !!token, 
-            userId: user?.id 
-        });
+        
+        // Expose to window for manual/subagent debugging
+        window.__DEBUG_REALTIME__ = {
+            isAuthenticated,
+            authLoading,
+            hasToken: !!token,
+            socketUrl: import.meta.env.VITE_REALTIME_URL || 'http://localhost:4000',
+            timestamp: new Date().toISOString()
+        };
+
+        console.log('CRITICAL: NotificationProvider Tracking:', window.__DEBUG_REALTIME__);
 
         if (!token) {
-            console.warn('NotificationProvider: No token found in apiClient memory.');
+            console.warn('CRITICAL: NotificationProvider: No token found. Aborting connection.');
             return;
         }
 
         try {
-            // Using Port 4000 as defined in the hr-realtime server
             const socketUrl = import.meta.env.VITE_REALTIME_URL || 'http://localhost:4000';
-            console.log('NotificationProvider: Initializing Socket.io with URL:', socketUrl);
             
             const newSocket = io(socketUrl, {
                 auth: { token },
                 transports: ['websocket'],
                 reconnection: true,
-                reconnectionAttempts: 5
+                reconnectionAttempts: 10,
+                timeout: 10000
             });
 
+            window.__DEBUG_REALTIME__.socket = newSocket;
+
             newSocket.on('connect', () => {
-                console.log(`Socket.io Connected: ${newSocket.id} for User: ${user?.id}`);
+                console.log(`CRITICAL: Socket.io Connected: ${newSocket.id}`);
+                window.__DEBUG_REALTIME__.connected = true;
+                window.__DEBUG_REALTIME__.socketId = newSocket.id;
             });
 
             newSocket.on('ReceiveNotification', (notification) => {

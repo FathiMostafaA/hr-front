@@ -15,9 +15,14 @@ let _accessToken = null;
 
 export const setAccessToken = (token) => {
     _accessToken = token;
+    if (token) {
+        localStorage.setItem('token', token);
+    } else {
+        localStorage.removeItem('token');
+    }
 };
 
-export const getAccessToken = () => _accessToken;
+export const getAccessToken = () => _accessToken || localStorage.getItem('token');
 
 apiClient.interceptors.request.use(
     (config) => {
