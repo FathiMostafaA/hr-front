@@ -8,6 +8,7 @@ import EventDetailsModal from './EventDetailsModal';
 import { toast } from 'react-hot-toast';
 
 const CalendarPage = () => {
+  const { connection } = useNotification();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -17,6 +18,28 @@ const CalendarPage = () => {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    if (!connection) return;
+
+    connection.emit('joinRoom', 'calendar');
+
+    const handleRefresh = () => {
+      console.log('Refreshing calendar due to real-time update');
+      fetchEvents();
+    };
+
+    connection.on('LeaveRequested', handleRefresh);
+    connection.on('LeaveUpdated', handleRefresh);
+    connection.on('HolidayCreated', handleRefresh);
+
+    return () => {
+      connection.emit('leaveRoom', 'calendar');
+      connection.off('LeaveRequested', handleRefresh);
+      connection.off('LeaveUpdated', handleRefresh);
+      connection.off('HolidayCreated', handleRefresh);
+    };
+  }, [connection]);
 
   const fetchEvents = async (year, month) => {
     try {

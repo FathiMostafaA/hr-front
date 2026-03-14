@@ -44,7 +44,7 @@ export const PresenceProvider = ({ children }) => {
         fetchPresence();
     }, [fetchPresence]);
 
-    // 3. Listen to SignalR events using the shared connection from NotificationContext
+    // 3. Listen to Socket.io events using the shared connection from NotificationContext
     useEffect(() => {
         if (!connection) return;
 

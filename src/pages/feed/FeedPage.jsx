@@ -16,9 +16,12 @@ const FeedPage = () => {
     const { connection, playNotificationSound } = useNotification();
     const { user } = useAuth();
 
-    // SignalR Listeners
+    // Socket.io Listeners
     useEffect(() => {
         if (!connection) return;
+
+        // Join the feed room to receive real-time updates
+        connection.emit('joinRoom', 'feed');
 
         connection.on('NewPost', (post) => {
             setPosts(prev => {
@@ -62,6 +65,7 @@ const FeedPage = () => {
         });
 
         return () => {
+            connection.emit('leaveRoom', 'feed');
             connection.off('NewPost');
             connection.off('NewComment');
             connection.off('PostLiked');
