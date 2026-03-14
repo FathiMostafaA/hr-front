@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: DockerFile
+      args:
+        - VITE_API_BASE_URL=https://api.eventra.site
+        - VITE_REALTIME_URL=https://api.eventra.site/realtime
     container_name: hr_frontend
     ports:
       - "8081:80"
