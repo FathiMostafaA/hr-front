@@ -53,15 +53,19 @@ export const NotificationProvider = ({ children }) => {
         }
 
         const token = localStorage.getItem('token');
+        console.log('NotificationProvider: isAuthenticated:', isAuthenticated, 'Token present:', !!token);
         if (!token) return;
 
         try {
             // Using Port 4000 as defined in the hr-realtime server
             const socketUrl = import.meta.env.VITE_REALTIME_URL || 'http://localhost:4000';
+            console.log('NotificationProvider: Initializing Socket.io with URL:', socketUrl);
             
             const newSocket = io(socketUrl, {
                 auth: { token },
-                transports: ['websocket']
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionAttempts: 5
             });
 
             newSocket.on('connect', () => {
