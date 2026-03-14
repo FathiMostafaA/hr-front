@@ -30,7 +30,8 @@ jobs:
             git pull origin dev
 
             # Create .env file pointing to staging API
-            echo "VITE_API_BASE_URL=https://staging-api.eventra.site" > .env
+            echo \"VITE_API_BASE_URL=https://staging-api.eventra.site\" > .env
+            echo \"VITE_REALTIME_URL=https://staging-api.eventra.site/realtime\" >> .env
 
             # Rebuild and restart
             docker compose -f docker-compose.dev.yml down
