@@ -5,10 +5,12 @@ import { toast } from 'react-hot-toast';
 import notificationService from '../api/services/notificationService';
 import { useNavigate } from 'react-router-dom';
 
+import { getAccessToken } from '../api/apiClient';
+
 const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, loading: authLoading } = useAuth(); // Added authLoading
     const navigate = useNavigate();
 
     const [connection, setConnection] = useState(null);
@@ -44,7 +46,7 @@ export const NotificationProvider = ({ children }) => {
 
     // 2. Real-time Connection (Socket.io)
     useEffect(() => {
-        if (!isAuthenticated) return;
+        if (!isAuthenticated || authLoading) return;
 
         // Prevent duplicate connections (React StrictMode)
         if (connectionRef.current) {
@@ -52,9 +54,18 @@ export const NotificationProvider = ({ children }) => {
             connectionRef.current = null;
         }
 
-        const token = localStorage.getItem('token');
-        console.log('NotificationProvider: isAuthenticated:', isAuthenticated, 'Token present:', !!token);
-        if (!token) return;
+        const token = getAccessToken();
+        console.log('NotificationProvider Tracking:', { 
+            isAuthenticated, 
+            authLoading, 
+            hasToken: !!token, 
+            userId: user?.id 
+        });
+
+        if (!token) {
+            console.warn('NotificationProvider: No token found in apiClient memory.');
+            return;
+        }
 
         try {
             // Using Port 4000 as defined in the hr-realtime server
