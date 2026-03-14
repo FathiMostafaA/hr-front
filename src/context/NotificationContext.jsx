@@ -75,8 +75,20 @@ export const NotificationProvider = ({ children }) => {
         try {
             const socketUrl = import.meta.env.VITE_REALTIME_URL || 'http://localhost:4000';
             
-            const newSocket = io(socketUrl, {
+            // Standardizing the URL and Path for Socket.io
+            // If the URL is https://api.site/realtime, we need to use origin: https://api.site and path: /realtime/socket.io/
+            const url = new URL(socketUrl.startsWith('http') ? socketUrl : `https://${socketUrl}`);
+            const socketPath = url.pathname !== '/' ? `${url.pathname}/socket.io/`.replace(/\/+/g, '/') : '/socket.io/';
+            
+            console.log('CRITICAL: Initializing Socket.io:', { 
+                origin: url.origin, 
+                path: socketPath 
+            });
+            window.__DEBUG_REALTIME__.resolvedPath = socketPath;
+
+            const newSocket = io(url.origin, {
                 auth: { token },
+                path: socketPath,
                 transports: ['websocket'],
                 reconnection: true,
                 reconnectionAttempts: 10,
