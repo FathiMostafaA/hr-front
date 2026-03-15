@@ -419,12 +419,12 @@ const EmployeeProfile = () => {
                             <div className="relative group w-32 h-32 shrink-0">
                                 {employee.profileImageUrl ? (
                                     <img 
-                                        src={`${import.meta.env.VITE_API_BASE_URL}${employee.profileImageUrl}`} 
+                                        src={`${import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site'}${employee.profileImageUrl}`} 
                                         alt={employee.fullName} 
-                                        className="w-full h-full rounded-full object-cover shadow-lg border-4 border-white"
+                                        className="w-full h-full rounded-full object-cover shadow-xl border-4 border-white ring-4 ring-slate-50/50"
                                     />
                                 ) : (
-                                    <div className="w-full h-full rounded-full bg-white shadow-lg border-4 border-white flex items-center justify-center text-4xl font-bold text-slate-400">
+                                    <div className="w-full h-full rounded-full bg-gradient-to-tr from-accent to-blue-600 shadow-xl border-4 border-white ring-4 ring-slate-50/50 flex items-center justify-center text-4xl font-bold text-white">
                                         {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
                                     </div>
                                 )}
@@ -683,12 +683,12 @@ const EmployeeProfile = () => {
                         <div className="relative group w-24 h-24 shrink-0">
                             {employee.profileImageUrl ? (
                                 <img 
-                                    src={`${import.meta.env.VITE_API_BASE_URL}${employee.profileImageUrl}`} 
+                                    src={`${import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site'}${employee.profileImageUrl}`} 
                                     alt={employee.fullName} 
-                                    className="w-full h-full rounded-2xl object-cover shadow-md border-4 border-white"
+                                    className="w-full h-full rounded-2xl object-cover shadow-lg border-4 border-white ring-4 ring-primary/5"
                                 />
                             ) : (
-                                <div className="w-full h-full rounded-2xl bg-white shadow-md border-4 border-white flex items-center justify-center text-3xl font-bold text-accent">
+                                <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-accent to-blue-600 shadow-lg border-4 border-white ring-4 ring-primary/5 flex items-center justify-center text-3xl font-bold text-white">
                                     {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
                                 </div>
                             )}

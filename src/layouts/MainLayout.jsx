@@ -343,12 +343,14 @@ const MainLayoutContent = () => {
                             >
                                 {user?.profileImageUrl ? (
                                     <img 
-                                        src={`${import.meta.env.VITE_API_BASE_URL}${user.profileImageUrl}`} 
+                                        src={`${import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site'}${user.profileImageUrl}`} 
                                         alt={user?.fullName} 
                                         className="w-full h-full object-cover" 
                                     />
                                 ) : (
-                                    user?.fullName?.charAt(0) || 'U'
+                                    <div className="w-full h-full bg-gradient-to-tr from-accent to-blue-600 flex items-center justify-center text-white">
+                                        {user?.fullName?.charAt(0) || 'U'}
+                                    </div>
                                 )}
                             </div>
                         </div>
