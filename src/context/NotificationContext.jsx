@@ -86,7 +86,9 @@ export const NotificationProvider = ({ children }) => {
                 origin: url.origin, 
                 path: socketPath 
             });
-            window.__DEBUG_REALTIME__.resolvedPath = socketPath;
+            if (import.meta.env.DEV) {
+                window.__DEBUG_REALTIME__.resolvedPath = socketPath;
+            }
 
             const newSocket = io(url.origin, {
                 auth: { token },
@@ -97,7 +99,9 @@ export const NotificationProvider = ({ children }) => {
                 timeout: 10000
             });
 
-            window.__DEBUG_REALTIME__.socket = newSocket;
+            if (import.meta.env.DEV) {
+                window.__DEBUG_REALTIME__.socket = newSocket;
+            }
 
             newSocket.on('connect', () => {
                 if (import.meta.env.DEV) {
