@@ -419,7 +419,7 @@ const EmployeeProfile = () => {
                             <div className="relative group w-32 h-32 shrink-0">
                                 {employee.profileImageUrl ? (
                                     <img 
-                                        src={`${import.meta.env.VITE_API_URL}${employee.profileImageUrl}`} 
+                                        src={`${import.meta.env.VITE_API_BASE_URL}${employee.profileImageUrl}`} 
                                         alt={employee.fullName} 
                                         className="w-full h-full rounded-full object-cover shadow-lg border-4 border-white"
                                     />
@@ -683,7 +683,7 @@ const EmployeeProfile = () => {
                         <div className="relative group w-24 h-24 shrink-0">
                             {employee.profileImageUrl ? (
                                 <img 
-                                    src={`${import.meta.env.VITE_API_URL}${employee.profileImageUrl}`} 
+                                    src={`${import.meta.env.VITE_API_BASE_URL}${employee.profileImageUrl}`} 
                                     alt={employee.fullName} 
                                     className="w-full h-full rounded-2xl object-cover shadow-md border-4 border-white"
                                 />
