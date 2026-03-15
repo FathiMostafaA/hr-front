@@ -343,7 +343,7 @@ const MainLayoutContent = () => {
                             >
                                 {user?.profileImageUrl ? (
                                     <img 
-                                        src={`${import.meta.env.VITE_API_URL}${user.profileImageUrl}`} 
+                                        src={`${import.meta.env.VITE_API_BASE_URL}${user.profileImageUrl}`} 
                                         alt={user?.fullName} 
                                         className="w-full h-full object-cover" 
                                     />
