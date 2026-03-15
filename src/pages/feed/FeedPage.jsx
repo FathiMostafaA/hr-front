@@ -164,32 +164,43 @@ const FeedPage = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto py-8 px-4 sm:px-0 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Page Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Newspaper className="w-7 h-7 text-accent" />
+                    <h1 className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3">
+                        <div className="p-2 bg-accent/10 rounded-xl">
+                            <Newspaper className="w-6 h-6 text-accent" />
+                        </div>
                         Company Feed
                     </h1>
-                    <p className="text-slate-500 mt-1">Stay connected with your team</p>
+                    <p className="text-[15px] text-slate-500 mt-2 font-medium">Stay connected, share ideas, and engage with your team.</p>
                 </div>
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => { setPage(1); fetchPosts(1); }}
-                    className="gap-1.5"
+                    className="gap-2 self-start sm:self-center bg-white border-slate-200 text-slate-600 hover:text-accent hover:border-accent hover:bg-accent/5 transition-all shadow-sm rounded-xl py-2"
                 >
                     <RefreshCw className="w-4 h-4" />
-                    Refresh
+                    Refresh Feed
                 </Button>
             </div>
 
             {/* Create Post */}
             <CreatePost onSubmit={handleCreatePost} />
 
+            {/* Feed Divider Area (Optional visual break) */}
+            {posts.length > 0 && (
+                <div className="flex items-center gap-4 py-2">
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Recent Updates</span>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+                </div>
+            )}
+
             {/* Feed Posts */}
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {posts.map((post) => (
                     <PostCard
                         key={post.id}
@@ -201,25 +212,40 @@ const FeedPage = () => {
                     />
                 ))}
 
+                {/* Initial Loading State */}
                 {loading && posts.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-3" />
-                        <p className="text-sm font-medium text-slate-500">Loading feed...</p>
+                    <div className="flex flex-col items-center justify-center py-24 bg-white/40 rounded-3xl border border-slate-100/50 backdrop-blur-sm">
+                        <div className="relative w-12 h-12 flex items-center justify-center mb-4">
+                            <div className="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+                            <div className="absolute inset-0 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <h3 className="text-base font-semibold text-slate-700">Loading your feed</h3>
+                        <p className="text-sm font-medium text-slate-400 mt-1">Gathering the latest team updates...</p>
                     </div>
                 )}
 
+                {/* Empty State */}
                 {!loading && posts.length === 0 && (
-                    <div className="text-center py-20 bg-white rounded-xl border border-slate-200">
-                        <Newspaper className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                        <h3 className="text-lg font-semibold text-slate-700">No posts yet</h3>
-                        <p className="text-sm text-slate-400 mt-1">Be the first to share something with the team!</p>
+                    <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm animate-in fade-in zoom-in-95 duration-500">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                            <Newspaper className="w-10 h-10 text-slate-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Your feed is empty</h3>
+                        <p className="text-[15px] text-slate-500 mt-2 max-w-sm mx-auto font-medium leading-relaxed">
+                            It's quiet here. Be the first to spark a conversation and share something with the team!
+                        </p>
                     </div>
                 )}
 
+                {/* Load More Button */}
                 {hasMore && posts.length > 0 && !loading && (
-                    <div className="text-center pt-2">
-                        <Button variant="ghost" onClick={handleLoadMore}>
-                            Load More
+                    <div className="text-center pt-8 pb-12">
+                        <Button 
+                            variant="outline" 
+                            onClick={handleLoadMore}
+                            className="rounded-full px-8 py-2.5 text-[15px] font-semibold text-slate-600 bg-white border-slate-200 shadow-sm hover:text-accent hover:border-accent hover:shadow-md hover:bg-white transition-all duration-300"
+                        >
+                            Load Older Posts
                         </Button>
                     </div>
                 )}
