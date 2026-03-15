@@ -106,13 +106,15 @@ const MainLayoutContent = () => {
     const searchRef = useRef(null);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const delayDebounceFn = setTimeout(async () => {
             if (searchTerm.trim().length === 0) {
                 setSearchResults([]);
                 setIsSearching(false);
                 return;
             }
-
+            
             setIsSearching(true);
             try {
                 // 1. Search Navigation
@@ -127,12 +129,15 @@ const MainLayoutContent = () => {
                     icon: item.icon
                 }));
 
-                // 2. Search Employees (Async)
+                // 2. Search Employees (Async) with signal
                 let employees = [];
                 try {
-                    employees = await EmployeeService.search(searchTerm);
+                    employees = await EmployeeService.search(searchTerm, { signal: controller.signal });
                 } catch (e) {
-                    console.error("Employee search error", e);
+                    if (e.name !== 'CanceledError' && e.name !== 'AbortError') {
+                        console.error("Employee search error", e);
+                    }
+                    return; // Don't update state if cancelled
                 }
 
                 const matchingEmployees = employees.map(emp => ({
@@ -146,13 +151,18 @@ const MainLayoutContent = () => {
 
                 setSearchResults([...matchingNavs, ...matchingEmployees]);
             } catch (error) {
-                console.error("Search failed", error);
+                if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
+                    console.error("Search failed", error);
+                }
             } finally {
                 setIsSearching(false);
             }
         }, 500);
 
-        return () => clearTimeout(delayDebounceFn);
+        return () => {
+            clearTimeout(delayDebounceFn);
+            controller.abort();
+        };
     }, [searchTerm, navItems]);
 
     // Click-outside to close search results

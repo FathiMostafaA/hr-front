@@ -18,6 +18,7 @@ export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [isMuted, setIsMuted] = useState(() => localStorage.getItem('notif_muted') === 'true');
 
     // Sound ref
     const audioRef = useRef(new Audio('/assets/sounds/notification.mp3'));
@@ -56,16 +57,17 @@ export const NotificationProvider = ({ children }) => {
 
         const token = getAccessToken();
         
-        // Expose to window for manual/subagent debugging
-        window.__DEBUG_REALTIME__ = {
-            isAuthenticated,
-            authLoading,
-            hasToken: !!token,
-            socketUrl: import.meta.env.VITE_REALTIME_URL || 'http://localhost:4000',
-            timestamp: new Date().toISOString()
-        };
-
-        console.log('CRITICAL: NotificationProvider Tracking:', window.__DEBUG_REALTIME__);
+        // Expose to window for debugging in DEV only
+        if (import.meta.env.DEV) {
+            window.__DEBUG_REALTIME__ = {
+                isAuthenticated,
+                authLoading,
+                hasToken: !!token,
+                socketUrl: import.meta.env.VITE_REALTIME_URL || 'http://localhost:4000',
+                timestamp: new Date().toISOString()
+            };
+            console.log('CRITICAL: NotificationProvider Tracking:', window.__DEBUG_REALTIME__);
+        }
 
         if (!token) {
             console.warn('CRITICAL: NotificationProvider: No token found. Aborting connection.');
@@ -98,9 +100,11 @@ export const NotificationProvider = ({ children }) => {
             window.__DEBUG_REALTIME__.socket = newSocket;
 
             newSocket.on('connect', () => {
-                console.log(`CRITICAL: Socket.io Connected: ${newSocket.id}`);
-                window.__DEBUG_REALTIME__.connected = true;
-                window.__DEBUG_REALTIME__.socketId = newSocket.id;
+                if (import.meta.env.DEV) {
+                    console.log(`CRITICAL: Socket.io Connected: ${newSocket.id}`);
+                    window.__DEBUG_REALTIME__.connected = true;
+                    window.__DEBUG_REALTIME__.socketId = newSocket.id;
+                }
             });
 
             newSocket.on('ReceiveNotification', (notification) => {
@@ -142,13 +146,28 @@ export const NotificationProvider = ({ children }) => {
         };
     }, [isAuthenticated, user?.id]);
 
-    const playNotificationSound = () => {
+    const playNotificationSound = useCallback(() => {
+        if (isMuted) return;
         try {
             audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(e => console.log('Audio play failed', e));
+            audioRef.current.play().catch(e => {
+                if (e.name === 'NotAllowedError') {
+                    console.log('Browser blocked autoplay. User interaction needed.');
+                } else {
+                    console.error('Audio play failed', e);
+                }
+            });
         } catch (e) {
             console.error('Sound error', e);
         }
+    }, [isMuted]);
+
+    const toggleMute = () => {
+        setIsMuted(prev => {
+            const newState = !prev;
+            localStorage.setItem('notif_muted', newState);
+            return newState;
+        });
     };
 
     const markAsRead = async (id) => {
@@ -208,7 +227,9 @@ export const NotificationProvider = ({ children }) => {
             markAllAsRead,
             handleNotificationClick,
             loadNotifications,
-            playNotificationSound
+            playNotificationSound,
+            isMuted,
+            toggleMute
         }}>
             {children}
         </NotificationContext.Provider>
