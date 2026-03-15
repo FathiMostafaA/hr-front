@@ -338,10 +338,18 @@ const MainLayoutContent = () => {
                                 </div>
                             </div>
                             <div
-                                className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-blue-500 border-2 border-white shadow-sm flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-md transition-shadow"
+                                className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-blue-500 border-2 border-white shadow-sm flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
                                 onClick={() => navigate('/settings')}
                             >
-                                {user?.fullName?.charAt(0) || 'U'}
+                                {user?.profileImageUrl ? (
+                                    <img 
+                                        src={`${import.meta.env.VITE_API_URL}${user.profileImageUrl}`} 
+                                        alt={user?.fullName} 
+                                        className="w-full h-full object-cover" 
+                                    />
+                                ) : (
+                                    user?.fullName?.charAt(0) || 'U'
+                                )}
                             </div>
                         </div>
                     </div>

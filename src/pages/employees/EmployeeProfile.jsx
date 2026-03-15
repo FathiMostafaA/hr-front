@@ -16,6 +16,7 @@ import {
     Download,
     X,
     Upload,
+    Loader2,
     Edit2,
     Building2,
     AlertCircle,
@@ -48,6 +49,7 @@ const EmployeeProfile = () => {
     const [documents, setDocuments] = useState([]);
     const [salaryComponents, setSalaryComponents] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const [isSubmittingComponent, setIsSubmittingComponent] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showComponentModal, setShowComponentModal] = useState(false);
@@ -121,6 +123,24 @@ const EmployeeProfile = () => {
         iban: '',
         socialInsuranceNumber: ''
     });
+
+    const handleProfileImageUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setIsUploadingAvatar(true);
+        try {
+            const newUrl = await EmployeeService.uploadProfileImage(id, file);
+            setEmployee(prev => ({ ...prev, profileImageUrl: newUrl }));
+            toast.success('Profile image updated successfully');
+        } catch (error) {
+            console.error('Failed to upload profile image', error);
+            toast.error(error?.response?.data?.message || error?.response?.data || 'Failed to update profile image');
+        } finally {
+            setIsUploadingAvatar(false);
+            event.target.value = null; // reset file input
+        }
+    };
 
     const fetchEmployee = async () => {
         try {
@@ -396,8 +416,35 @@ const EmployeeProfile = () => {
                     <div className="h-32 bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 border-b border-slate-200" />
                     <CardContent className="px-8 pb-8 -mt-12 relative">
                         <div className="flex flex-col md:flex-row items-end gap-6">
-                            <div className="w-32 h-32 rounded-full bg-white shadow-lg border-4 border-white flex items-center justify-center text-4xl font-bold text-slate-400">
-                                {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
+                            <div className="relative group w-32 h-32 shrink-0">
+                                {employee.profileImageUrl ? (
+                                    <img 
+                                        src={`${import.meta.env.VITE_API_URL}${employee.profileImageUrl}`} 
+                                        alt={employee.fullName} 
+                                        className="w-full h-full rounded-full object-cover shadow-lg border-4 border-white"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full rounded-full bg-white shadow-lg border-4 border-white flex items-center justify-center text-4xl font-bold text-slate-400">
+                                        {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
+                                    </div>
+                                )}
+                                
+                                {(isSelf || isAdminOrHR) && (
+                                    <label className="absolute inset-0 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center flex-col cursor-pointer transition-opacity backdrop-blur-[2px]">
+                                        {isUploadingAvatar ? (
+                                            <Loader2 className="w-6 h-6 animate-spin" />
+                                        ) : (
+                                            <Upload className="w-6 h-6" />
+                                        )}
+                                        <input 
+                                            type="file" 
+                                            className="hidden" 
+                                            accept="image/jpeg,image/png,image/jpg" 
+                                            onChange={handleProfileImageUpload} 
+                                            disabled={isUploadingAvatar}
+                                        />
+                                    </label>
+                                )}
                             </div>
                             <div className="flex-1 pb-2 space-y-2">
                                 <div>
@@ -633,8 +680,35 @@ const EmployeeProfile = () => {
                 <div className="h-32 bg-gradient-to-r from-accent/20 via-primary/10 to-accent/5 border-b border-slate-100" />
                 <CardContent className="px-8 pb-0 -mt-12">
                     <div className="flex flex-col md:flex-row items-end gap-6 mb-6">
-                        <div className="w-24 h-24 rounded-2xl bg-white shadow-md border-4 border-white flex items-center justify-center text-3xl font-bold text-accent">
-                            {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
+                        <div className="relative group w-24 h-24 shrink-0">
+                            {employee.profileImageUrl ? (
+                                <img 
+                                    src={`${import.meta.env.VITE_API_URL}${employee.profileImageUrl}`} 
+                                    alt={employee.fullName} 
+                                    className="w-full h-full rounded-2xl object-cover shadow-md border-4 border-white"
+                                />
+                            ) : (
+                                <div className="w-full h-full rounded-2xl bg-white shadow-md border-4 border-white flex items-center justify-center text-3xl font-bold text-accent">
+                                    {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
+                                </div>
+                            )}
+                            
+                            {(isSelf || isAdminOrHR) && (
+                                <label className="absolute inset-0 bg-black/50 text-white rounded-2xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity backdrop-blur-[2px]">
+                                    {isUploadingAvatar ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <Upload className="w-5 h-5" />
+                                    )}
+                                    <input 
+                                        type="file" 
+                                        className="hidden" 
+                                        accept="image/jpeg,image/png,image/jpg" 
+                                        onChange={handleProfileImageUpload} 
+                                        disabled={isUploadingAvatar}
+                                    />
+                                </label>
+                            )}
                         </div>
                         <div className="flex-1 pb-2">
                             <div className="flex items-center gap-3">

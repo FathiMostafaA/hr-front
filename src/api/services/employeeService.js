@@ -37,6 +37,16 @@ const EmployeeService = {
         });
         return response.data;
     },
+
+    uploadProfileImage: async (id, file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await apiClient.post(`/Employees/${id}/profile-image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
 };
 
 export default EmployeeService;
