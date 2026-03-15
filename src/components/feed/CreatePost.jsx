@@ -13,180 +13,94 @@ const CreatePost = ({ onSubmit }) => {
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
 
-    // Mention state
-    const [suggestions, setSuggestions] = useState([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [mentionQuery, setMentionQuery] = useState('');
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const [mentionStartPos, setMentionStartPos] = useState(-1);
+import { MentionsInput, Mention } from 'react-mentions';
+import userService from '../../api/services/userService';
+// ... (imports remain at top of file but we inject react-mentions via diff in the body)
 
-    const handleTextChange = async (e) => {
-        const value = e.target.value;
-        const selectionStart = e.target.selectionStart;
-        setContent(value);
-
-        // Check for @ trigger
-        const lastAtIndex = value.lastIndexOf('@', selectionStart - 1);
-        if (lastAtIndex !== -1) {
-            const textAfterAt = value.substring(lastAtIndex + 1, selectionStart);
-            // Only trigger if @ is at start of line or after space
-            const charBeforeAt = lastAtIndex > 0 ? value[lastAtIndex - 1] : ' ';
-
-            if (charBeforeAt === ' ' || charBeforeAt === '\n') {
-                if (!textAfterAt.includes(' ')) {
-                    setMentionQuery(textAfterAt);
-                    setMentionStartPos(lastAtIndex);
-                    setShowSuggestions(true);
-
-                    // Always show @Everyone as first option
-                    const everyone = { id: 'all', firstName: 'Everyone', lastName: '', email: 'Notify all active users' };
-
-                    if (textAfterAt.length >= 2) {
-                        try {
-                            const results = await userService.search(textAfterAt);
-                            setSuggestions([everyone, ...results]);
-                            setSelectedIndex(0);
-                        } catch (err) {
-                            console.error('Mention search failed', err);
-                            setSuggestions([everyone]);
-                        }
-                    } else {
-                        setSuggestions([everyone]);
-                        setSelectedIndex(0);
-                    }
-                    return;
-                }
-            }
-        }
-
-        setShowSuggestions(false);
-        setSuggestions([]);
-    };
-
-    const handleKeyDown = (e) => {
-        if (showSuggestions && suggestions.length > 0) {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev + 1) % suggestions.length);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-            } else if (e.key === 'Enter' || e.key === 'Tab') {
-                e.preventDefault();
-                selectUser(suggestions[selectedIndex]);
-            } else if (e.key === 'Escape') {
-                setShowSuggestions(false);
-            }
-        }
-    };
-
-    const selectUser = (selectedUser) => {
-        const beforeMention = content.substring(0, mentionStartPos);
-        const afterMention = content.substring(content.indexOf(mentionQuery, mentionStartPos) + mentionQuery.length);
-
-        // Structured format: @[id:name]
-        const structuredMention = `@[${selectedUser.id}:${selectedUser.firstName}${selectedUser.lastName ? ' ' + selectedUser.lastName : ''}] `;
-        const newContent = beforeMention + structuredMention + afterMention;
-
-        setContent(newContent);
-        setShowSuggestions(false);
-        setSuggestions([]);
-    };
-
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setImage(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-                setFocused(true);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const removeImage = () => {
-        setImage(null);
-        setImagePreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!content.trim() && !image) return;
-
-        setLoading(true);
+// The fetchUsers callback for react-mentions
+    const fetchUsers = async (query, callback) => {
+        if (!query) return;
         try {
-            await onSubmit(content, image);
-            setContent('');
-            setImage(null);
-            setImagePreview(null);
-            setFocused(false);
-        } finally {
-            setLoading(false);
+            const results = await userService.search(query);
+            // react-mentions requires { id, display } objects
+            const formatted = results.map(u => ({
+                id: u.id,
+                display: `${u.firstName} ${u.lastName || ''}`.trim(),
+                email: u.email
+            }));
+            
+            // Add everyone option
+            const everyone = { id: 'all', display: 'Everyone', email: 'Notify all active users' };
+            callback([everyone, ...formatted]);
+        } catch (err) {
+            console.error('Mention search failed', err);
+            callback([{ id: 'all', display: 'Everyone', email: 'Notify all active users' }]);
         }
     };
 
-    return (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8">
-            <form onSubmit={handleSubmit} className="relative">
-                <div className="p-5 sm:p-6 flex gap-4">
-                    {/* Avatar */}
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-accent/90 to-blue-600/90 flex items-center justify-center text-white font-bold text-lg shadow-sm ring-4 ring-slate-50 flex-shrink-0 mt-0.5">
-                        {user?.fullName?.charAt(0) || 'U'}
-                    </div>
-                    
+    const handleTextChange = (e, newValue, newPlainTextValue, mentions) => {
+        setContent(newValue);
+    };
+
+    const renderSuggestion = (suggestion, search, highlightedDisplay, index, focused) => (
+        <div className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${focused ? 'bg-accent/5' : 'hover:bg-slate-50'}`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm flex-shrink-0 ${focused ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'}`}>
+                {suggestion.display.charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold truncate ${focused ? 'text-accent' : 'text-slate-700'}`}>
+                    {suggestion.display}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">{suggestion.email}</p>
+            </div>
+        </div>
+    );
+
+    // ... further down, inside the render return block:
                     {/* Input Area */}
                     <div className="flex-1 relative group">
-                        <textarea
+                        <MentionsInput
                             value={content}
                             onChange={handleTextChange}
-                            onKeyDown={handleKeyDown}
                             onFocus={() => setFocused(true)}
                             placeholder={`What's on your mind, ${user?.firstName || 'there'}?`}
-                            className={`w-full bg-transparent border-none rounded-xl px-0 py-2 text-slate-800 text-lg sm:text-[17px] leading-relaxed outline-none resize-none placeholder:text-slate-400 placeholder:font-light transition-all duration-300 ${focused ? 'min-h-[120px]' : 'min-h-[60px]'}`}
-                            rows={focused ? 4 : 2}
-                        />
+                            className="mentions-wrapper"
+                            style={{
+                                control: { fontSize: '1.125rem', lineHeight: '1.5', minHeight: focused ? '120px' : '60px', transition: 'min-height 0.3s' },
+                                input: { padding: 0, border: 'none', outline: 'none', color: '#1e293b' },
+                                highlighter: { padding: 0 },
+                                suggestions: {
+                                    list: {
+                                        backgroundColor: 'white',
+                                        border: '1px solid #f1f5f9',
+                                        borderRadius: '1rem',
+                                        boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
+                                        overflow: 'hidden',
+                                        marginTop: '4px'
+                                    },
+                                    item: {
+                                        padding: 0,
+                                        borderBottom: '1px solid #f8fafc'
+                                    }
+                                }
+                            }}
+                        >
+                            <Mention
+                                trigger="@"
+                                data={fetchUsers}
+                                renderSuggestion={renderSuggestion}
+                                displayTransform={(id, display) => `@${display}`}
+                                style={{
+                                    backgroundColor: '#eff6ff', // blue-50
+                                    color: '#2563eb', // blue-600
+                                    borderRadius: '0.25rem',
+                                    fontWeight: '500'
+                                }}
+                            />
+                        </MentionsInput>
 
                         {/* Animated Underline Effect on Focus */}
                         <div className={`absolute bottom-0 left-0 h-0.5 bg-accent/20 rounded-full transition-all duration-500 ease-out ${focused ? 'w-full' : 'w-0'}`}></div>
-
-                        {/* Suggestion Dropdown */}
-                        {showSuggestions && suggestions.length > 0 && (
-                            <div className="absolute z-50 top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                <div className="px-4 py-2.5 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mention Someone</span>
-                                    <button onClick={() => setShowSuggestions(false)} className="text-slate-300 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100">
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                                <div className="max-h-60 overflow-y-auto py-1 custom-scrollbar">
-                                    {suggestions.map((suggestion, index) => (
-                                        <button
-                                            key={suggestion.id}
-                                            type="button"
-                                            onClick={() => selectUser(suggestion)}
-                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${index === selectedIndex ? 'bg-accent/5' : 'hover:bg-slate-50'
-                                                }`}
-                                        >
-                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm ${index === selectedIndex ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
-                                                }`}>
-                                                {suggestion.firstName?.charAt(0)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`text-sm font-semibold truncate ${index === selectedIndex ? 'text-accent' : 'text-slate-700'}`}>
-                                                    {suggestion.firstName} {suggestion.lastName}
-                                                </p>
-                                                <p className="text-[11px] text-slate-400 truncate mt-0.5">{suggestion.email}</p>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
 
                         {/* Image Preview Area */}
                         {imagePreview && (

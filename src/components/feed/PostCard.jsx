@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Trash2, Send, ChevronDown, ChevronUp, Edit2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import feedService from '../../api/services/feedService';
+import { User, X, Edit2 } from 'lucide-react';
+import { MentionsInput, Mention } from 'react-mentions';
 import userService from '../../api/services/userService';
-import { toast } from 'react-hot-toast';
-import { User, X } from 'lucide-react';
 
 const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
     const { user } = useAuth();
@@ -18,95 +14,42 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
 
-    // Mention state for both comments and editing
-    const [mentionTarget, setMentionTarget] = useState('comment'); // 'comment' or 'edit'
-
-    // Mention state for comments
-    const [suggestions, setSuggestions] = useState([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [mentionQuery, setMentionQuery] = useState('');
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const [mentionStartPos, setMentionStartPos] = useState(-1);
-
-    const handleTextChange = async (e, type) => {
-        const value = e.target.value;
-        const selectionStart = e.target.selectionStart;
-
-        if (type === 'comment') setCommentText(value);
-        else setEditContent(value);
-
-        setMentionTarget(type);
-
-        const lastAtIndex = value.lastIndexOf('@', selectionStart - 1);
-        if (lastAtIndex !== -1) {
-            const textAfterAt = value.substring(lastAtIndex + 1, selectionStart);
-            const charBeforeAt = lastAtIndex > 0 ? value[lastAtIndex - 1] : ' ';
-
-            if (charBeforeAt === ' ' || charBeforeAt === '\n') {
-                if (!textAfterAt.includes(' ')) {
-                    setMentionQuery(textAfterAt);
-                    setMentionStartPos(lastAtIndex);
-                    setShowSuggestions(true);
-
-                    // Always show @Everyone as first option
-                    const everyone = { id: 'all', firstName: 'Everyone', lastName: '', email: 'Notify all active users' };
-
-                    if (textAfterAt.length >= 2) {
-                        try {
-                            const results = await userService.search(textAfterAt);
-                            setSuggestions([everyone, ...results]);
-                            setSelectedIndex(0);
-                        } catch (err) {
-                            console.error('Mention search failed', err);
-                            setSuggestions([everyone]);
-                        }
-                    } else {
-                        setSuggestions([everyone]);
-                        setSelectedIndex(0);
-                    }
-                    return;
-                }
-            }
-        }
-
-        setShowSuggestions(false);
-        setSuggestions([]);
-    };
-
-    const handleKeyDown = (e) => {
-        if (showSuggestions && suggestions.length > 0) {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev + 1) % suggestions.length);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-            } else if (e.key === 'Enter' || e.key === 'Tab') {
-                e.preventDefault();
-                selectUser(suggestions[selectedIndex]);
-            } else if (e.key === 'Escape') {
-                setShowSuggestions(false);
-            }
+    // The fetchUsers callback for react-mentions
+    const fetchUsers = async (query, callback) => {
+        if (!query) return;
+        try {
+            const results = await userService.search(query);
+            const formatted = results.map(u => ({
+                id: u.id,
+                display: `${u.firstName} ${u.lastName || ''}`.trim(),
+                email: u.email
+            }));
+            const everyone = { id: 'all', display: 'Everyone', email: 'Notify all active users' };
+            callback([everyone, ...formatted]);
+        } catch (err) {
+            console.error('Mention search failed', err);
+            callback([{ id: 'all', display: 'Everyone', email: 'Notify all active users' }]);
         }
     };
 
-    const selectUser = (selectedUser) => {
-        const targetText = mentionTarget === 'comment' ? commentText : editContent;
-        const beforeMention = targetText.substring(0, mentionStartPos);
-        const afterMention = targetText.substring(targetText.indexOf(mentionQuery, mentionStartPos) + mentionQuery.length);
-        const structuredMention = `@[${selectedUser.id}:${selectedUser.firstName}${selectedUser.lastName ? ' ' + selectedUser.lastName : ''}] `;
-
-        const newText = beforeMention + structuredMention + afterMention;
-        if (mentionTarget === 'comment') setCommentText(newText);
-        else setEditContent(newText);
-
-        setShowSuggestions(false);
-        setSuggestions([]);
-    };
+    const renderSuggestion = (suggestion, search, highlightedDisplay, index, focused) => (
+        <div className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${focused ? 'bg-accent/5' : 'hover:bg-slate-50'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm flex-shrink-0 ${focused ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'}`}>
+                {suggestion.display.charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold truncate ${focused ? 'text-accent' : 'text-slate-700'}`}>
+                    {suggestion.display}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">{suggestion.email}</p>
+            </div>
+        </div>
+    );
 
     const renderContent = (content) => {
         if (!content) return null;
-        const mentionRegex = /@\[([a-fA-F0-9-]{36}|all):([^\]]+)\]/g;
+        // react-mentions uses @[display](id)
+        const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
         const parts = [];
         let lastIndex = 0;
         let match;
@@ -115,16 +58,20 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
             if (match.index > lastIndex) {
                 parts.push(content.substring(lastIndex, match.index));
             }
-            if (match[1] === 'all') {
+            
+            const displayName = match[1];
+            const id = match[2];
+
+            if (id === 'all') {
                 parts.push(
                     <span key={match.index} className="text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-100 shadow-sm cursor-pointer hover:bg-amber-100 transition-colors">
-                        @{match[2]}
+                        @{displayName}
                     </span>
                 );
             } else {
                 parts.push(
                     <span key={match.index} className="text-accent font-semibold hover:underline cursor-pointer">
-                        @{match[2]}
+                        @{displayName}
                     </span>
                 );
             }
@@ -231,14 +178,27 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
             <div className="px-5 sm:px-6 pb-5">
                 {isEditing ? (
                     <div className="space-y-4 relative animate-in fade-in zoom-in-95 duration-200">
-                        <textarea
+                        <MentionsInput
                             value={editContent}
-                            onChange={(e) => handleTextChange(e, 'edit')}
-                            onKeyDown={handleKeyDown}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[15px] text-slate-800 outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white transition-all shadow-inner"
-                            rows={4}
-                            autoFocus
-                        />
+                            onChange={(e, value) => setEditContent(value)}
+                            className="mentions-wrapper"
+                            style={{
+                                control: { fontSize: '15px', minHeight: '100px' },
+                                input: { padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '0.75rem', outline: 'none', backgroundColor: '#f8fafc' },
+                                suggestions: {
+                                    list: { backgroundColor: 'white', border: '1px solid #f1f5f9', borderRadius: '1rem', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)', overflow: 'hidden' },
+                                    item: { padding: 0, borderBottom: '1px solid #f8fafc' }
+                                }
+                            }}
+                        >
+                            <Mention
+                                trigger="@"
+                                data={fetchUsers}
+                                renderSuggestion={renderSuggestion}
+                                displayTransform={(id, display) => `@${display}`}
+                                style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '0.25rem', fontWeight: '500' }}
+                            />
+                        </MentionsInput>
                         <div className="flex justify-end gap-2">
                             <button
                                 onClick={() => { setIsEditing(false); setEditContent(post.content); }}
@@ -255,30 +215,7 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                             </button>
                         </div>
 
-                        {/* Edit Mention Dropdown */}
-                        {showSuggestions && mentionTarget === 'edit' && suggestions.length > 0 && (
-                            <div className="absolute z-50 top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                <div className="max-h-60 overflow-y-auto py-1">
-                                    {suggestions.map((suggestion, index) => (
-                                        <button
-                                            key={suggestion.id}
-                                            type="button"
-                                            onClick={() => selectUser(suggestion)}
-                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${index === selectedIndex ? 'bg-accent/5' : 'hover:bg-slate-50'
-                                                }`}
-                                        >
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${index === selectedIndex ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                                {suggestion.firstName?.charAt(0)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`text-sm font-semibold truncate ${index === selectedIndex ? 'text-accent' : 'text-slate-700'}`}>{suggestion.firstName} {suggestion.lastName}</p>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                        </div>
                 ) : (
                     <div className="space-y-3 mt-2">
                         {post.content && (
@@ -373,19 +310,34 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-blue-500 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 shadow-sm">
                                 {user?.fullName?.charAt(0) || 'U'}
                             </div>
-                            <div className="flex-1 relative bg-white border border-slate-200 rounded-full flex items-center pl-4 pr-1.5 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-accent/20 focus-within:border-accent transition-all">
-                                <input
-                                    type="text"
+                            <div className="flex-1 relative bg-white border border-slate-200 rounded-2xl flex flex-col shadow-sm focus-within:ring-2 focus-within:ring-accent/20 focus-within:border-accent transition-all overflow-hidden p-1">
+                                <MentionsInput
                                     value={commentText}
-                                    onChange={(e) => handleTextChange(e, 'comment')}
-                                    onKeyDown={handleKeyDown}
+                                    onChange={(e, value) => setCommentText(value)}
                                     placeholder="Write a comment..."
-                                    className="flex-1 bg-transparent text-[14px] text-slate-700 outline-none placeholder:text-slate-400 placeholder:font-light"
-                                />
+                                    className="comment-mentions-wrapper"
+                                    style={{
+                                        control: { fontSize: '14px', minHeight: '38px', padding: '8px 12px' },
+                                        input: { border: 'none', outline: 'none', color: '#334155' },
+                                        suggestions: {
+                                            list: { backgroundColor: 'white', border: '1px solid #f1f5f9', borderRadius: '1rem', boxShadow: '0 -5px 30px -5px rgba(0,0,0,0.1)', overflow: 'hidden' },
+                                            item: { padding: 0, borderBottom: '1px solid #f8fafc' }
+                                        }
+                                    }}
+                                    singleLine={false}
+                                >
+                                    <Mention
+                                        trigger="@"
+                                        data={fetchUsers}
+                                        renderSuggestion={renderSuggestion}
+                                        displayTransform={(id, display) => `@${display}`}
+                                        style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '0.25rem', fontWeight: '500' }}
+                                    />
+                                </MentionsInput>
                                 <button
                                     type="submit"
                                     disabled={!commentText.trim() || submitting}
-                                    className="p-1.5 bg-accent text-white rounded-full hover:bg-accent/90 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed shadow-sm ml-2"
+                                    className="absolute right-2 bottom-2 p-1.5 bg-accent text-white rounded-full hover:bg-accent/90 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed shadow-sm ml-2 z-10"
                                 >
                                     {submitting ? (
                                         <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
@@ -395,39 +347,6 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                                 </button>
                             </div>
                         </div>
-
-                        {/* Comment Mention Dropdown */}
-                        {showSuggestions && mentionTarget === 'comment' && suggestions.length > 0 && (
-                            <div className="absolute z-50 bottom-full left-6 mb-2 w-72 bg-white rounded-2xl shadow-[0_-5px_30px_-5px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                <div className="px-4 py-2 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mention</span>
-                                    <button type="button" onClick={() => setShowSuggestions(false)} className="text-slate-300 hover:text-slate-500">
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                                <div className="max-h-56 overflow-y-auto py-1 custom-scrollbar">
-                                    {suggestions.map((suggestion, index) => (
-                                        <button
-                                            key={suggestion.id}
-                                            type="button"
-                                            onClick={() => selectUser(suggestion)}
-                                            className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${index === selectedIndex ? 'bg-accent/5' : 'hover:bg-slate-50'
-                                                }`}
-                                        >
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${index === selectedIndex ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
-                                                }`}>
-                                                {suggestion.firstName?.charAt(0)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`text-sm font-semibold truncate ${index === selectedIndex ? 'text-accent' : 'text-slate-700'}`}>
-                                                    {suggestion.firstName} {suggestion.lastName}
-                                                </p>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </form>
                 </div>
             )}
