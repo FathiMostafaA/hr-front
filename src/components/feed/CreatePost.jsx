@@ -3,6 +3,7 @@ import { Send, Sparkles, Image as ImageIcon, X, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import userService from '../../api/services/userService';
+import { MentionsInput, Mention } from 'react-mentions';
 
 const CreatePost = ({ onSubmit }) => {
     const { user } = useAuth();
@@ -12,10 +13,6 @@ const CreatePost = ({ onSubmit }) => {
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
-
-import { MentionsInput, Mention } from 'react-mentions';
-import userService from '../../api/services/userService';
-// ... (imports remain at top of file but we inject react-mentions via diff in the body)
 
 // The fetchUsers callback for react-mentions
     const fetchUsers = async (query, callback) => {

@@ -1,6 +1,10 @@
-import { User, X, Edit2 } from 'lucide-react';
-import { MentionsInput, Mention } from 'react-mentions';
+import React, { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Trash2, Send, ChevronDown, ChevronUp, Edit2, User, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import feedService from '../../api/services/feedService';
 import userService from '../../api/services/userService';
+import { toast } from 'react-hot-toast';
+import { MentionsInput, Mention } from 'react-mentions';
 
 const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
     const { user } = useAuth();
