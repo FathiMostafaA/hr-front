@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Send, Sparkles, Image as ImageIcon, X, User } from 'lucide-react';
+import { Send, Sparkles, Image as ImageIcon, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../ui/Button';
 import userService from '../../api/services/userService';
 import { MentionsInput, Mention } from 'react-mentions';
 
@@ -14,7 +13,7 @@ const CreatePost = ({ onSubmit }) => {
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
 
-// The fetchUsers callback for react-mentions
+    // The fetchUsers callback for react-mentions
     const fetchUsers = async (query, callback) => {
         if (!query) return;
         try {
@@ -39,6 +38,43 @@ const CreatePost = ({ onSubmit }) => {
         setContent(newValue);
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+                setFocused(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!content.trim() && !image) return;
+
+        setLoading(true);
+        try {
+            await onSubmit(content, image);
+            setContent('');
+            setImage(null);
+            setImagePreview(null);
+            setFocused(false);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const renderSuggestion = (suggestion, search, highlightedDisplay, index, focused) => (
         <div className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${focused ? 'bg-accent/5' : 'hover:bg-slate-50'}`}>
             <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm flex-shrink-0 ${focused ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'}`}>
@@ -53,7 +89,15 @@ const CreatePost = ({ onSubmit }) => {
         </div>
     );
 
-    // ... further down, inside the render return block:
+    return (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8">
+            <form onSubmit={handleSubmit} className="relative">
+                <div className="p-5 sm:p-6 flex gap-4">
+                    {/* Avatar */}
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-accent/90 to-blue-600/90 flex items-center justify-center text-white font-bold text-lg shadow-sm ring-4 ring-slate-50 flex-shrink-0 mt-0.5">
+                        {user?.fullName?.charAt(0) || 'U'}
+                    </div>
+                    
                     {/* Input Area */}
                     <div className="flex-1 relative group">
                         <MentionsInput
