@@ -280,7 +280,23 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                         )}
                     </div>
                 ) : (
-                    <p className="text-slate-700 text-[15px] sm:text-base leading-relaxed whitespace-pre-wrap tracking-tight">{renderContent(post.content)}</p>
+                    <div className="space-y-3 mt-2">
+                        {post.content && (
+                            <p className="text-slate-700 text-[15px] sm:text-base leading-relaxed whitespace-pre-wrap tracking-tight">
+                                {renderContent(post.content)}
+                            </p>
+                        )}
+                        {post.imageUrl && (
+                            <div className="w-full overflow-hidden rounded-2xl border border-slate-100 mt-3 shadow-sm bg-slate-50">
+                                <img 
+                                    src={(import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site') + post.imageUrl} 
+                                    alt="Post attachment" 
+                                    loading="lazy"
+                                    className="w-full max-h-[600px] object-contain hover:scale-[1.02] transition-transform duration-500 ease-in-out" 
+                                />
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 

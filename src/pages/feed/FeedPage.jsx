@@ -94,9 +94,9 @@ const FeedPage = () => {
         fetchPosts(1);
     }, [fetchPosts]);
 
-    const handleCreatePost = async (content) => {
+    const handleCreatePost = async (content, image) => {
         try {
-            const newPost = await feedService.createPost(content);
+            const newPost = await feedService.createPost(content, image);
             setPosts(prev => {
                 if (prev.some(p => p.id === newPost.id)) return prev;
                 return [newPost, ...prev];

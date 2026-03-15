@@ -6,8 +6,18 @@ const feedService = {
         return response.data;
     },
 
-    createPost: async (content) => {
-        const response = await apiClient.post('/Feed', { content });
+    createPost: async (content, imageFile = null) => {
+        const formData = new FormData();
+        formData.append('content', content);
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+        
+        const response = await apiClient.post('/Feed', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     },
 
