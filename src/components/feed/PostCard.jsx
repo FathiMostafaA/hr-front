@@ -23,11 +23,13 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
         if (!query) return;
         try {
             const results = await userService.search(query);
-            const formatted = results.map(u => ({
-                id: u.id,
-                display: `${u.firstName} ${u.lastName || ''}`.trim(),
-                email: u.email
-            }));
+            const formatted = results
+                .filter(u => u && u.id && u.firstName)
+                .map(u => ({
+                    id: String(u.id),
+                    display: `${u.firstName} ${u.lastName || ''}`.trim(),
+                    email: u.email || ''
+                }));
             const everyone = { id: 'all', display: 'Everyone', email: 'Notify all active users' };
             callback([everyone, ...formatted]);
         } catch (err) {
@@ -183,12 +185,13 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                 {isEditing ? (
                     <div className="space-y-4 relative animate-in fade-in zoom-in-95 duration-200">
                         <MentionsInput
-                            value={editContent}
+                            value={editContent || ''}
                             onChange={(e, value) => setEditContent(value)}
                             className="mentions-wrapper"
                             style={{
                                 control: { fontSize: '15px', minHeight: '100px' },
                                 input: { padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '0.75rem', outline: 'none', backgroundColor: '#f8fafc' },
+                                highlighter: { padding: '12px 16px', border: '1px solid transparent' },
                                 suggestions: {
                                     list: { backgroundColor: 'white', border: '1px solid #f1f5f9', borderRadius: '1rem', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)', overflow: 'hidden' },
                                     item: { padding: 0, borderBottom: '1px solid #f8fafc' }
@@ -198,6 +201,7 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                             <Mention
                                 trigger="@"
                                 data={fetchUsers}
+                                markup="@[__display__](__id__)"
                                 renderSuggestion={renderSuggestion}
                                 displayTransform={(id, display) => `@${display}`}
                                 style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '0.25rem', fontWeight: '500' }}
@@ -316,13 +320,14 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                             </div>
                             <div className="flex-1 relative bg-white border border-slate-200 rounded-2xl flex flex-col shadow-sm focus-within:ring-2 focus-within:ring-accent/20 focus-within:border-accent transition-all overflow-hidden p-1">
                                 <MentionsInput
-                                    value={commentText}
+                                    value={commentText || ''}
                                     onChange={(e, value) => setCommentText(value)}
                                     placeholder="Write a comment..."
                                     className="comment-mentions-wrapper"
                                     style={{
                                         control: { fontSize: '14px', minHeight: '38px', padding: '8px 12px' },
                                         input: { border: 'none', outline: 'none', color: '#334155' },
+                                        highlighter: { border: 'none' },
                                         suggestions: {
                                             list: { backgroundColor: 'white', border: '1px solid #f1f5f9', borderRadius: '1rem', boxShadow: '0 -5px 30px -5px rgba(0,0,0,0.1)', overflow: 'hidden' },
                                             item: { padding: 0, borderBottom: '1px solid #f8fafc' }
@@ -333,6 +338,7 @@ const PostCard = ({ post, onLike, onComment, onDelete, onUpdate }) => {
                                     <Mention
                                         trigger="@"
                                         data={fetchUsers}
+                                        markup="@[__display__](__id__)"
                                         renderSuggestion={renderSuggestion}
                                         displayTransform={(id, display) => `@${display}`}
                                         style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '0.25rem', fontWeight: '500' }}

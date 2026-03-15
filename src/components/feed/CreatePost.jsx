@@ -19,11 +19,13 @@ const CreatePost = ({ onSubmit }) => {
         try {
             const results = await userService.search(query);
             // react-mentions requires { id, display } objects
-            const formatted = results.map(u => ({
-                id: u.id,
-                display: `${u.firstName} ${u.lastName || ''}`.trim(),
-                email: u.email
-            }));
+            const formatted = results
+                .filter(u => u && u.id && u.firstName)
+                .map(u => ({
+                    id: String(u.id),
+                    display: `${u.firstName} ${u.lastName || ''}`.trim(),
+                    email: u.email || ''
+                }));
             
             // Add everyone option
             const everyone = { id: 'all', display: 'Everyone', email: 'Notify all active users' };
@@ -101,7 +103,7 @@ const CreatePost = ({ onSubmit }) => {
                     {/* Input Area */}
                     <div className="flex-1 relative group">
                         <MentionsInput
-                            value={content}
+                            value={content || ''}
                             onChange={handleTextChange}
                             onFocus={() => setFocused(true)}
                             placeholder={`What's on your mind, ${user?.firstName || 'there'}?`}
@@ -109,7 +111,7 @@ const CreatePost = ({ onSubmit }) => {
                             style={{
                                 control: { fontSize: '1.125rem', lineHeight: '1.5', minHeight: focused ? '120px' : '60px', transition: 'min-height 0.3s' },
                                 input: { padding: 0, border: 'none', outline: 'none', color: '#1e293b' },
-                                highlighter: { padding: 0 },
+                                highlighter: { padding: 0, border: '1px solid transparent' },
                                 suggestions: {
                                     list: {
                                         backgroundColor: 'white',
@@ -129,11 +131,12 @@ const CreatePost = ({ onSubmit }) => {
                             <Mention
                                 trigger="@"
                                 data={fetchUsers}
+                                markup="@[__display__](__id__)"
                                 renderSuggestion={renderSuggestion}
                                 displayTransform={(id, display) => `@${display}`}
                                 style={{
-                                    backgroundColor: '#eff6ff', // blue-50
-                                    color: '#2563eb', // blue-600
+                                    backgroundColor: '#eff6ff', 
+                                    color: '#2563eb', 
                                     borderRadius: '0.25rem',
                                     fontWeight: '500'
                                 }}
