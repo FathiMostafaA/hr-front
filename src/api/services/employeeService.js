@@ -26,8 +26,8 @@ const EmployeeService = {
         return response.data;
     },
 
-    search: async (term) => {
-        const response = await apiClient.get('/Employees/search', { params: { term } });
+    search: async (term, config = {}) => {
+        const response = await apiClient.get('/Employees/search', { params: { term }, ...config });
         return response.data;
     },
 

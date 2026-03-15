@@ -3,31 +3,31 @@ import { Loader2 } from 'lucide-react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import MainLayout from './layouts/MainLayout';
-import LoginPage from './pages/auth/LoginPage';
-import ActivatePage from './pages/auth/ActivatePage';
-import Dashboard from './pages/dashboard/Dashboard';
-import EmployeeList from './pages/employees/EmployeeList';
-import EmployeeProfile from './pages/employees/EmployeeProfile';
-import DepartmentList from './pages/departments/DepartmentList';
-import AttendancePage from './pages/attendance/AttendancePage';
-import LeavePage from './pages/leaves/LeavePage';
-import PayrollPage from './pages/payroll/PayrollPage';
-import MyPayroll from './pages/payroll/MyPayroll';
-import RecruitmentPage from './pages/recruitment/RecruitmentPage';
-import PerformancePage from './pages/performance/PerformancePage';
-import DocumentPage from './pages/documents/DocumentPage';
-import SettingsPage from './pages/settings/SettingsPage';
-import FeedPage from './pages/feed/FeedPage';
-import UserManagement from './pages/admin/UserManagement';
-import OrgChartPage from './pages/org/OrgChartPage';
-import TrainingPage from './pages/training/TrainingPage';
-import SanctionsPage from './pages/sanctions/SanctionsPage';
-import AuditLogsPage from './pages/admin/AuditLogsPage';
-import ReportsPage from './pages/reports/ReportsPage';
-import CareersPage from './pages/careers/CareersPage';
-import AccessDeniedPage from './pages/errors/AccessDeniedPage';
-import HolidaysPage from './pages/admin/HolidaysPage';
-import CalendarPage from './pages/calendar/CalendarPage';
+const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'));
+const ActivatePage = React.lazy(() => import('./pages/auth/ActivatePage'));
+const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
+const EmployeeList = React.lazy(() => import('./pages/employees/EmployeeList'));
+const EmployeeProfile = React.lazy(() => import('./pages/employees/EmployeeProfile'));
+const DepartmentList = React.lazy(() => import('./pages/departments/DepartmentList'));
+const AttendancePage = React.lazy(() => import('./pages/attendance/AttendancePage'));
+const LeavePage = React.lazy(() => import('./pages/leaves/LeavePage'));
+const PayrollPage = React.lazy(() => import('./pages/payroll/PayrollPage'));
+const MyPayroll = React.lazy(() => import('./pages/payroll/MyPayroll'));
+const RecruitmentPage = React.lazy(() => import('./pages/recruitment/RecruitmentPage'));
+const PerformancePage = React.lazy(() => import('./pages/performance/PerformancePage'));
+const DocumentPage = React.lazy(() => import('./pages/documents/DocumentPage'));
+const SettingsPage = React.lazy(() => import('./pages/settings/SettingsPage'));
+const FeedPage = React.lazy(() => import('./pages/feed/FeedPage'));
+const UserManagement = React.lazy(() => import('./pages/admin/UserManagement'));
+const OrgChartPage = React.lazy(() => import('./pages/org/OrgChartPage'));
+const TrainingPage = React.lazy(() => import('./pages/training/TrainingPage'));
+const SanctionsPage = React.lazy(() => import('./pages/sanctions/SanctionsPage'));
+const AuditLogsPage = React.lazy(() => import('./pages/admin/AuditLogsPage'));
+const ReportsPage = React.lazy(() => import('./pages/reports/ReportsPage'));
+const CareersPage = React.lazy(() => import('./pages/careers/CareersPage'));
+const AccessDeniedPage = React.lazy(() => import('./pages/errors/AccessDeniedPage'));
+const HolidaysPage = React.lazy(() => import('./pages/admin/HolidaysPage'));
+const CalendarPage = React.lazy(() => import('./pages/calendar/CalendarPage'));
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -67,11 +67,16 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   return (
     <AuthProvider>
-      <Routes>
-        {/* Auth Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/activate" element={<ActivatePage />} />
-        <Route path="/access-denied" element={<AccessDeniedPage />} />
+      <React.Suspense fallback={
+        <div className="flex items-center justify-center h-screen bg-slate-50">
+          <Loader2 className="w-8 h-8 text-accent animate-spin" />
+        </div>
+      }>
+        <Routes>
+          {/* Auth Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/activate" element={<ActivatePage />} />
+          <Route path="/access-denied" element={<AccessDeniedPage />} />
 
         {/* Public Careers Routes */}
         <Route path="/careers" element={<CareersPage />} />
@@ -91,7 +96,11 @@ function App() {
               <EmployeeList />
             </RoleProtectedRoute>
           } />
-          <Route path="employees/:id" element={<EmployeeProfile />} />
+          <Route path="employees/:id" element={
+            <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR', 'Manager', 'Employee']}>
+              <EmployeeProfile />
+            </RoleProtectedRoute>
+          } />
           <Route path="departments" element={
             <RoleProtectedRoute allowedRoles={['Admin', 'HRManager', 'HR']}>
               <DepartmentList />
@@ -176,7 +185,8 @@ function App() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </React.Suspense>
     </AuthProvider>
   );
 }

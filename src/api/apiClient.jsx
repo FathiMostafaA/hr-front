@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_URL = (import.meta.env.VITE_API_BASE_URL || 'https://api.eventra.site') + '/api';
-console.log('Using API Base URL:', API_URL);
+const API_URL = import.meta.env.VITE_API_BASE_URL + '/api';
+if (import.meta.env.DEV) console.log('Using API Base URL:', API_URL);
 
 const apiClient = axios.create({
     baseURL: API_URL,
@@ -15,14 +15,9 @@ let _accessToken = null;
 
 export const setAccessToken = (token) => {
     _accessToken = token;
-    if (token) {
-        localStorage.setItem('token', token);
-    } else {
-        localStorage.removeItem('token');
-    }
 };
 
-export const getAccessToken = () => _accessToken || localStorage.getItem('token');
+export const getAccessToken = () => _accessToken;
 
 apiClient.interceptors.request.use(
     (config) => {
@@ -59,7 +54,9 @@ apiClient.interceptors.response.use(
                 'Path: $.nationalIdExpiry': 'Field: National ID Expiry',
                 'Network Error': 'Network connection error, please check your internet',
                 'Internal Server Error': 'An internal server error occurred',
-                'Bad Request': 'Invalid request, please check the provided data'
+                'Bad Request': 'Invalid request, please check the provided data',
+                'Document.InvalidContent': 'الملف المرفوع غير صالح أو لا يتطابق محتواه مع امتداده (Security Risk)',
+                'Payroll.Duplicate': 'يوجد سجل رواتب لهذا الموظف في نفس الفترة بالفعل'
             };
 
             for (const [key, value] of Object.entries(translations)) {
@@ -125,10 +122,31 @@ apiClient.interceptors.response.use(
         // Only show toast for non-401/403 errors (which are handled specifically)
         // and only if it's not a cancelled request
         if (error.response?.status !== 401 && error.response?.status !== 403 && !axios.isCancel(error)) {
-            toast.error(errorMessage, {
-                id: `api-error-${error.response?.status || 'network'}`,
-                duration: 5000
-            });
+            const refCode = `ERR-${error.response?.status || 'NET'}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+            
+            toast.error(
+                (t) => (
+                    <div className="flex flex-col gap-1">
+                        <span className="font-semibold">{errorMessage}</span>
+                        <div className="flex items-center justify-between text-[10px] opacity-70 mt-1 border-t pt-1">
+                            <span>Ref: {refCode}</span>
+                            <button 
+                                onClick={() => {
+                                    navigator.clipboard.writeText(refCode);
+                                    toast.success('تم نسخ رمز الخطأ', { id: 'copy-success', duration: 1000 });
+                                }}
+                                className="underline hover:text-accent"
+                            >
+                                Copy Ref
+                            </button>
+                        </div>
+                    </div>
+                ),
+                {
+                    id: `api-error-${error.response?.status || 'network'}`,
+                    duration: 6000
+                }
+            );
         }
 
         return Promise.reject(error);
